@@ -1,11 +1,10 @@
 package org.dhis2.data.server;
 
-import androidx.annotation.NonNull;
-
 import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.android.core.user.User;
 
-import io.reactivex.Observable;
+import androidx.annotation.NonNull;
+import io.reactivex.Single;
 
 public class UserManagerImpl implements UserManager {
     private final D2 d2;
@@ -16,14 +15,14 @@ public class UserManagerImpl implements UserManager {
 
     @NonNull
     @Override
-    public Observable<User> logIn(@NonNull String username, @NonNull String password) {
-        return Observable.defer(() -> Observable.fromCallable(d2.userModule().logIn(username, password)));
+    public Single<User> logIn(@NonNull String username, @NonNull String password) {
+        return d2.userModule().logIn(username, password);
     }
 
     @NonNull
     @Override
-    public Observable<Boolean> isUserLoggedIn() {
-        return Observable.defer(() -> Observable.fromCallable(d2.userModule().isLogged()));
+    public Single<Boolean> isUserLoggedIn() {
+        return d2.userModule().isLogged();
     }
 
     @Override

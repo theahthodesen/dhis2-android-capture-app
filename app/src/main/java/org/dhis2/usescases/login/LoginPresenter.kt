@@ -111,7 +111,7 @@ class LoginPresenter internal constructor(private val configurationRepository: C
         disposable.add(
                 configurationRepository.configure(baseUrl)
                         .map { config -> (view.abstractActivity.applicationContext as App).createServerComponent(config).userManager() }
-                        .switchMap { userManager ->
+                        .switchMapSingle { userManager ->
                             val prefs = view.abstractActivity.getSharedPreferences(Constants.SHARE_PREFS, Context.MODE_PRIVATE)
                             prefs.edit().putString(Constants.SERVER, serverUrl).apply()
                             this.userManager = userManager
@@ -158,11 +158,11 @@ class LoginPresenter internal constructor(private val configurationRepository: C
 
     override fun logOut() {
         userManager?.let {
-            disposable.add(Observable.fromCallable<org.hisp.dhis.android.core.common.Unit>(it.d2.userModule().logOut())
+            disposable.add(it.d2.userModule().logOut()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
-                            { data ->
+                            { () ->
                                 val prefs = view.abstracContext.sharedPreferences
                                 prefs.edit().putBoolean("SessionLocked", false).apply()
                                 prefs.edit().putString("pin", null).apply()

@@ -176,7 +176,7 @@ public class App extends MultiDexApplication implements Components {
     private void setUpUserComponent() {
         UserManager userManager = serverComponent == null
                 ? null : serverComponent.userManager();
-        if (userManager != null && userManager.isUserLoggedIn().blockingFirst()) {
+        if (userManager != null && userManager.isUserLoggedIn().blockingGet()) {
             userComponent = serverComponent.plus(new UserModule());
         }
     }
