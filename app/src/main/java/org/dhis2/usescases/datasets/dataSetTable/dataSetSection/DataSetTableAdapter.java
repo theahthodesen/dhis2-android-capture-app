@@ -85,7 +85,7 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     private Boolean showColumnTotal = false;
     private final FlowableProcessor<Trio<String, String, Integer>> processorOptionSet;
 
-    private int currentWidth = 400;
+    private int currentWidth = 200;
     private int currentHeight;
 
     private String catCombo;
@@ -97,24 +97,27 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     private ObservableField<TableScale> currentTableScale = new ObservableField<>();
 
     private void scale() {
-        if (currentWidth == 200) {
-            currentWidth = 300;
+        if (currentWidth == 100) {
+            currentWidth = 150;
             currentHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 36, context.getResources().getDisplayMetrics());
             currentTableScale.set(TableScale.DEFAULT);
-        } else if (currentWidth == 300) {
-            currentWidth = 400;
+        } else if (currentWidth == 150) {
+            currentWidth = 200;
             currentHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 48, context.getResources().getDisplayMetrics());
             currentTableScale.set(TableScale.LARGE);
-        } else if (currentWidth == 400) {
-            currentWidth = 200;
+        } else if (currentWidth == 200) {
+            currentWidth = 100;
             currentHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 24, context.getResources().getDisplayMetrics());
             currentTableScale.set(TableScale.SMALL);
-
         }
 
-        onScaleListener.scaleTo(currentWidth, currentHeight);
+        onScaleListener.scaleTo(intToSp(currentWidth), currentHeight);
 
         notifyDataSetChanged();
+    }
+
+    private int intToSp(int number) {
+       return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, number, context.getResources().getDisplayMetrics());
     }
 
 
@@ -180,7 +183,7 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
         String value = cellItemModel != null && !cellItemModel.equals("") ? cellItemModel.toString() : viewModels.get(rowPosition).get(columnPosition).value();
 
         rows.get(holder.getItemViewType()).onBind(holder, viewModels.get(rowPosition).get(columnPosition), value);
-        holder.itemView.getLayoutParams().width = currentWidth;
+        holder.itemView.getLayoutParams().width = intToSp(currentWidth);
         holder.itemView.getLayoutParams().height = currentHeight;
     }
 
@@ -223,11 +226,11 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     public void onBindColumnHeaderViewHolder(AbstractViewHolder holder, Object columnHeaderItemModel, int position) {
         ((DataSetRHeaderHeader) holder).bind(((CategoryOption) columnHeaderItemModel).displayName(), currentTableScale);
         if (((CategoryOption) columnHeaderItemModel).displayName().isEmpty()) {
-            ((DataSetRHeaderHeader) holder).binding.container.getLayoutParams().width = currentWidth;
+            ((DataSetRHeaderHeader) holder).binding.container.getLayoutParams().width = intToSp(currentWidth);
         } else {
             int i = getHeaderRecyclerPositionFor(columnHeaderItemModel);
             ((DataSetRHeaderHeader) holder).binding.container.getLayoutParams().width =
-                    (currentWidth * i + (int) (context.getResources().getDisplayMetrics().density * (i - 1)));
+                    (intToSp(currentWidth) * i + (int) (context.getResources().getDisplayMetrics().density * (i - 1)));
         }
         ((DataSetRHeaderHeader) holder).binding.title.requestLayout();
     }
