@@ -48,17 +48,12 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import io.reactivex.Observable;
+import kotlin.text.Charsets;
 import timber.log.Timber;
 
 import static android.text.TextUtils.isEmpty;
 import static java.util.zip.Deflater.BEST_COMPRESSION;
-import static org.dhis2.data.qr.QRjson.ATTR_JSON;
-import static org.dhis2.data.qr.QRjson.DATA_JSON;
-import static org.dhis2.data.qr.QRjson.DATA_JSON_WO_REGISTRATION;
-import static org.dhis2.data.qr.QRjson.ENROLLMENT_JSON;
-import static org.dhis2.data.qr.QRjson.EVENTS_JSON;
-import static org.dhis2.data.qr.QRjson.EVENT_JSON;
-import static org.dhis2.data.qr.QRjson.TEI_JSON;
+import static org.dhis2.data.qr.QRjson.*;
 
 /**
  * QUADRAM. Created by ppajuelo on 22/05/2018.
@@ -234,14 +229,8 @@ public class QRCodeGenerator implements QRInterface {
     public static Bitmap transform(String type, String info) {
         byte[] data;
         String encoded;
-        try {
-            data = info.getBytes("UTF-8");
-            encoded = Base64.encodeToString(data, Base64.DEFAULT);
-        } catch (UnsupportedEncodingException e) {
-            Timber.e(e);
-            encoded = e.getLocalizedMessage();
-        }
-
+        data = info.getBytes(Charsets.UTF_8);
+        encoded = Base64.encodeToString(data, Base64.DEFAULT);
         MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
         Bitmap bitmap = null;
         Gson gson = new GsonBuilder().setDateFormat(DateUtils.DATABASE_FORMAT_EXPRESSION).create();
