@@ -3,6 +3,7 @@ package org.dhis2.usescases.login
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextUtils.isEmpty
@@ -13,6 +14,7 @@ import android.view.WindowManager
 import android.webkit.URLUtil
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -369,9 +371,11 @@ class LoginActivity : ActivityGlobalAbstract(), LoginContracts.View {
 //endregion
 
     override fun openAccountRecovery() {
-        val intent = Intent(this, WebViewActivity::class.java)
-        intent.putExtra(WEB_VIEW_URL, binding.serverUrlEdit.text.toString() + ACCOUNT_RECOVERY)
-        startActivity(intent)
+        val builder = CustomTabsIntent.Builder()
+        builder.setToolbarColor(R.color.colorPrimary);
+        val customTabsIntent = builder.build()
+        customTabsIntent.launchUrl(this,
+                Uri.parse(binding.serverUrlEdit.text.toString() + ACCOUNT_RECOVERY))
     }
 
     override fun displayAlertDialog(titleResource: Int, descriptionResource: Int, negativeResource: Int?, positiveResource: Int) {
