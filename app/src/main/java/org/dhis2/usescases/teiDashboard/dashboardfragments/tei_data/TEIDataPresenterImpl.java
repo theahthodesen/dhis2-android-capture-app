@@ -212,7 +212,7 @@ class TEIDataPresenterImpl implements TEIDataContracts.Presenter {
             switch (item.getOrder()) {
                 case 0:
                     Intent intent = new Intent(view.getContext(), QrActivity.class);
-                    intent.putExtra("TEI_UID", teiUid);
+                    intent.putExtra("TEI_UID",  dashboardModel.getCurrentEnrollment().uid());
                     view.showQR(intent);
                     return true;
                 case 1:

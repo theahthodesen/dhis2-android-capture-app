@@ -3,6 +3,7 @@ package org.dhis2.usescases.qrCodes;
 import android.annotation.SuppressLint;
 
 import org.dhis2.data.qr.QRInterface;
+import org.hisp.dhis.android.core.D2;
 
 import androidx.annotation.NonNull;
 
@@ -17,16 +18,18 @@ public class QrPresenter implements QrContracts.Presenter {
     private final QRInterface qrInterface;
     private QrContracts.View view;
     private CompositeDisposable disposable;
+    private D2 d2;
 
-    QrPresenter(QRInterface qrInterface) {
+    QrPresenter(QRInterface qrInterface, D2 d2) {
         this.qrInterface = qrInterface;
+        this.d2 = d2;
         this.disposable = new CompositeDisposable();
     }
 
     @SuppressLint({"RxLeakedSubscription", "CheckResult"})
-    public void generateQrs(@NonNull String teUid, @NonNull QrContracts.View view) {
+    public void generateQrs(@NonNull String enrollmentUid, @NonNull QrContracts.View view) {
         this.view = view;
-        disposable.add(qrInterface.teiQRs(teUid)
+        disposable.add(d2.smsModule().qrCodeCase().generateEnrollmentCode(enrollmentUid)
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -51,15 +54,6 @@ public class QrPresenter implements QrContracts.Presenter {
             view.onBackClick();
     }
 
-    @Override
-    public void onPrevQr() {
-        view.onPrevQr();
-    }
-
-    @Override
-    public void onNextQr() {
-        view.onNextQr();
-    }
 
     @Override
     public void onDetach() {

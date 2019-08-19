@@ -26,8 +26,8 @@ public class QrEventsWORegistrationModule {
 
     @Provides
     @PerActivity
-    QrEventsWORegistrationContracts.Presenter providePresenter(QRInterface qrInterface) {
-        return new QrEventsWORegistrationPresenter(qrInterface);
+    QrEventsWORegistrationContracts.Presenter providePresenter(QRInterface qrInterface, D2 d2) {
+        return new QrEventsWORegistrationPresenter(qrInterface, d2);
     }
 
     @Provides

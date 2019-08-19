@@ -9,22 +9,14 @@ import java.util.List;
 public class QrEventsWORegistrationContracts {
 
     public interface View {
-        void showQR(@NonNull List<QrViewModel> bitmaps);
+        void showQR(@NonNull String value);
 
         void onBackClick();
-
-        void onPrevQr();
-
-        void onNextQr();
     }
 
     public interface Presenter {
         void generateQrs(@NonNull String eventUid, @NonNull QrEventsWORegistrationContracts.View view);
 
         void onBackClick();
-
-        void onPrevQr();
-
-        void onNextQr();
     }
 }

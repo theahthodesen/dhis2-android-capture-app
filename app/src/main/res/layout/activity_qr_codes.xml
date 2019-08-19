@@ -85,65 +85,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <androidx.viewpager.widget.ViewPager
-                android:id="@+id/view_pager"
+            <ImageView
+                android:id="@+id/qr_code"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginBottom="82dp" />
+                android:layout_margin="50dp"
+                android:scaleType="centerInside"
+                tools:ignore="ContentDescription" />
 
-            <ImageView
-                android:id="@+id/bitmapTest"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_marginBottom="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginStart="16dp"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:id="@+id/prev"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_gravity="center_vertical"
-                    android:onClick="@{()->presenter.onPrevQr()}"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/ic_keyboard_arrow_left_black"
-                    tools:ignore="ContentDescription" />
-
-
-                <ImageView
-                    android:id="@+id/next"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_gravity="center_vertical"
-                    android:onClick="@{()->presenter.onNextQr()}"
-                    android:visibility="gone"
-                    app:srcCompat="@drawable/ic_keyboard_arrow_right_black"
-                    tools:ignore="ContentDescription" />
-
-                <TextView
-                    android:id="@+id/page"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:gravity="center"
-                    android:textSize="18sp" />
-            </RelativeLayout>
-            <View
-                android:id="@+id/separator"
-                android:layout_width="wrap_content"
-                android:layout_height="2dp"
-                android:layout_margin="4dp"
-                android:background="@color/bg_gray_ccc"
-                android:layout_alignParentStart="true"
-                android:layout_alignBottom="@+id/view_pager"/>
         </RelativeLayout>
     </LinearLayout>
 </layout>

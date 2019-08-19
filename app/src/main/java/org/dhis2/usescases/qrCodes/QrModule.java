@@ -24,8 +24,8 @@ public class QrModule {
 
     @Provides
     @PerActivity
-    QrContracts.Presenter providePresenter(QRInterface qrInterface) {
-        return new QrPresenter(qrInterface);
+    QrContracts.Presenter providePresenter(QRInterface qrInterface, D2 d2) {
+        return new QrPresenter(qrInterface, d2);
     }
 
     @Provides

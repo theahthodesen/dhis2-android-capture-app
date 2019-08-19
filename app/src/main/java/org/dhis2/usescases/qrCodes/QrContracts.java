@@ -9,13 +9,9 @@ import java.util.List;
 public class QrContracts {
 
     public interface View {
-        void showQR(@NonNull List<QrViewModel> bitmaps);
+        void showQR(@NonNull String bitmaps);
 
         void onBackClick();
-
-        void onPrevQr();
-
-        void onNextQr();
 
         void showQRBitmap(Bitmap bitmap);
     }
@@ -24,10 +20,6 @@ public class QrContracts {
         void generateQrs(@NonNull String teUid, @NonNull QrContracts.View view);
 
         void onBackClick();
-
-        void onPrevQr();
-
-        void onNextQr();
 
         void onDetach();
     }
