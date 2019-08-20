@@ -24,8 +24,10 @@ public class QrEventsWORegistrationPresenter implements QrEventsWORegistrationCo
     @SuppressLint({"RxLeakedSubscription", "CheckResult"})
     public void generateQrs(@NonNull String eventUid, @NonNull QrEventsWORegistrationContracts.View view) {
         this.view = view;
-        d2.smsModule().qrCodeCase().generateSimpleEventCode(eventUid)
-                .subscribeOn(Schedulers.computation())
+        d2.smsModule().configCase().setModuleEnabled(true)
+                .andThen(d2.smsModule().configCase().refreshMetadataIds())
+                .andThen(
+                        d2.smsModule().qrCodeCase().generateSimpleEventCode(eventUid))                .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         view::showQR,

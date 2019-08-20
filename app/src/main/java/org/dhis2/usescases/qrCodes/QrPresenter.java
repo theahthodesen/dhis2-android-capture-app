@@ -29,7 +29,11 @@ public class QrPresenter implements QrContracts.Presenter {
     @SuppressLint({"RxLeakedSubscription", "CheckResult"})
     public void generateQrs(@NonNull String enrollmentUid, @NonNull QrContracts.View view) {
         this.view = view;
-        disposable.add(d2.smsModule().qrCodeCase().generateEnrollmentCode(enrollmentUid)
+        disposable.add(
+                d2.smsModule().configCase().setModuleEnabled(true)
+                        .andThen(d2.smsModule().configCase().refreshMetadataIds())
+                .andThen(
+                d2.smsModule().qrCodeCase().generateEnrollmentCode(enrollmentUid))
                 .subscribeOn(Schedulers.computation())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
