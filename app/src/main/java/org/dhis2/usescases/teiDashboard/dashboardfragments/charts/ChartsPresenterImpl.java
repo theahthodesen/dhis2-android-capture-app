@@ -17,7 +17,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
 
     @Override
     public boolean hasProgramWritePermission() {
-        return d2.programModule().programs.uid(programUid).withAllChildren().blockingGet().access().data().write();
+        return d2.programModule().programs.uid(programUid).blockingGet().access().data().write();
 
     }
 

@@ -401,6 +401,8 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
             }
 
             binding.date.setText(selectedDateString);
+            presenter.initOrgunit(selectedDate);
+
         } else {
             if (!isEmpty(eventModel.enrollment()) && eventCreationType != EventCreationType.ADDNEW) {
                 binding.orgUnit.setEnabled(false);
@@ -426,8 +428,10 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
                             this.selectedDate = selectedDate;
                             binding.date.setText(DateUtils.getInstance().getPeriodUIString(periodType, selectedDate, Locale.getDefault()));
                             binding.date.clearFocus();
-                            if (!fixedOrgUnit)
-                                binding.orgUnit.setText("");
+                            if (!fixedOrgUnit) {
+                                presenter.initOrgunit(selectedDate);
+//                                binding.orgUnit.setText("");
+                            }
                         })
                         .show(getSupportFragmentManager(), PeriodDialog.class.getSimpleName());
             }
@@ -688,8 +692,10 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
         selectedDateString = DateUtils.getInstance().getPeriodUIString(periodType, selectedDate, Locale.getDefault());
         binding.date.setText(selectedDateString);
         binding.date.clearFocus();
-        if (!fixedOrgUnit)
-            binding.orgUnit.setText("");
+        if (!fixedOrgUnit) {
+            presenter.initOrgunit(selectedDate);
+//            binding.orgUnit.setText("");
+        }
     }
 
     @Override
@@ -792,6 +798,11 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
     }
 
     @Override
+    public EventCreationType eventcreateionType() {
+        return eventCreationType;
+    }
+
+    @Override
     public void runSmsSubmission() {
         if (!getResources().getBoolean(R.bool.sms_enabled)) {
             return;
@@ -813,19 +824,12 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
     }
 
     @Override
-    public EventCreationType eventcreateionType() {
-        return eventCreationType;
-    }
-
-    @Override
-    public void latitudeWarning(boolean showWarning) {
-//        binding.lat.setError(showWarning ? getString(R.string.formatting_error) : null);
-    }
-
-    @Override
-    public void longitudeWarning(boolean showWarning) {
-//        binding.lon.setError(showWarning ? getString(R.string.formatting_error) : null);
-
+    public void setInitialOrgUnit(OrganisationUnit organisationUnit) {
+        if (organisationUnit != null) {
+            this.selectedOrgUnit = organisationUnit.uid();
+            binding.orgUnit.setText(organisationUnit.displayName());
+        } else
+            binding.orgUnit.setText("");
     }
 
     private int calculateCompletedFields(@NonNull List<FieldViewModel> updates) {
