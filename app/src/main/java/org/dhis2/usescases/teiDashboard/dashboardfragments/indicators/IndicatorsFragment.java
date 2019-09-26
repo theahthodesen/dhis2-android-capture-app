@@ -82,4 +82,5 @@ public class IndicatorsFragment extends FragmentGlobalAbstract implements Indica
             }
         };
     }
+
 }

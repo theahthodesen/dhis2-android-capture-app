@@ -432,6 +432,7 @@
     <string name="dashboard_indicators">Indicators</string>
     <string name="empty_indicators">There are no indicators for this program.</string>
     <string name="dashboard_notes">Notes</string>
+    <string name="dashboard_charts">Charts</string>
     <string name="unable_to_complete">Unable to complete</string>
     <string name="field_errors">Some fields have errors. Please, check them to be able to complete</string>
     <string name="unselect_enrollment">All enrollments</string>

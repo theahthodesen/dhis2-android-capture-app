@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Parcelable;
 
 import org.dhis2.R;
+import org.dhis2.usescases.teiDashboard.dashboardfragments.charts.ChartsFragment;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.IndicatorsFragment;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.notes.NotesFragment;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.RelationshipFragment;
@@ -19,7 +20,7 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 
 public class DashboardPagerTabletAdapter extends FragmentStatePagerAdapter {
 
-    private static final int MOVILE_DASHBOARD_SIZE = 3;
+    private static final int MOVILE_DASHBOARD_SIZE = 4;
     private final Context context;
     private String currentProgram;
 
@@ -46,6 +47,8 @@ public class DashboardPagerTabletAdapter extends FragmentStatePagerAdapter {
                 return new RelationshipFragment();
             case 2:
                 return new NotesFragment();
+            case 3:
+                return new ChartsFragment();
         }
     }
 
@@ -63,6 +66,8 @@ public class DashboardPagerTabletAdapter extends FragmentStatePagerAdapter {
                 return context.getString(R.string.dashboard_relationships);
             case 2:
                 return context.getString(R.string.dashboard_notes);
+            case 3:
+                return context.getString(R.string.dashboard_charts);
         }
     }
 }
