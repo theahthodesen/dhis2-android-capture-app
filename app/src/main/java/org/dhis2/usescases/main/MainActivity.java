@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -54,6 +55,10 @@ import javax.inject.Inject;
 
 import io.reactivex.functions.Consumer;
 
+import static org.dhis2.utils.analytics.AnalyticsConstants.BLOCK_SESSION;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CLICK;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CLOSE_SESSION;
+
 
 public class MainActivity extends ActivityGlobalAbstract implements MainContracts.View, ExporterListener {
 
@@ -63,7 +68,8 @@ public class MainActivity extends ActivityGlobalAbstract implements MainContract
     MainContracts.Presenter presenter;
 
     private ProgramFragment programFragment;
-    private FragmentGlobalAbstract activeFragment;
+    @VisibleForTesting
+    protected FragmentGlobalAbstract activeFragment;
 
     ObservableInt currentFragment = new ObservableInt(R.id.menu_home);
     private boolean isPinLayoutVisible = false;
@@ -87,6 +93,7 @@ public class MainActivity extends ActivityGlobalAbstract implements MainContract
             changeFragment(item.getItemId());
             return false;
         });
+        analyticsHelper.setEvent("sale", "algo", "o que");
         binding.pinLayout.pinLockView.attachIndicatorDots(binding.pinLayout.indicatorDots);
         binding.pinLayout.pinLockView.setPinLockListener(new PinLockListener() {
             @Override
@@ -174,10 +181,10 @@ public class MainActivity extends ActivityGlobalAbstract implements MainContract
 
     @Override
     public void openDrawer(int gravity) {
-        if (!binding.drawerLayout.isDrawerOpen(gravity))
-            binding.drawerLayout.openDrawer(gravity);
+        if (!binding.mainDrawerLayout.isDrawerOpen(gravity))
+            binding.mainDrawerLayout.openDrawer(gravity);
         else
-            binding.drawerLayout.closeDrawer(gravity);
+            binding.mainDrawerLayout.closeDrawer(gravity);
     }
 
     @Override
@@ -205,7 +212,7 @@ public class MainActivity extends ActivityGlobalAbstract implements MainContract
     @Override
     public void onLockClick() {
         if (prefs.getString("pin", null) == null) {
-            binding.drawerLayout.closeDrawers();
+            binding.mainDrawerLayout.closeDrawers();
             binding.pinLayout.getRoot().setVisibility(View.VISIBLE);
             isPinLayoutVisible = true;
         } else
@@ -257,9 +264,11 @@ public class MainActivity extends ActivityGlobalAbstract implements MainContract
                 binding.filter.setVisibility(View.GONE);
                 break;
             case R.id.block_button:
+                analyticsHelper.setEvent(BLOCK_SESSION, CLICK, BLOCK_SESSION);
                 onLockClick();
                 break;
             case R.id.logout_button:
+                analyticsHelper.setEvent(CLOSE_SESSION, CLICK, CLOSE_SESSION);
                 presenter.logOut();
                 break;
             case R.id.menu_home:
@@ -276,7 +285,7 @@ public class MainActivity extends ActivityGlobalAbstract implements MainContract
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, activeFragment, tag).commitAllowingStateLoss();
             binding.title.setText(tag);
         }
-        binding.drawerLayout.closeDrawers();
+        binding.mainDrawerLayout.closeDrawers();
 
         if (backDropActive && !(activeFragment instanceof ProgramFragment))
             showHideFilter();
