@@ -1,5 +1,7 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+import com.github.mikephil.charting.charts.LineChart;
+
 import org.dhis2.databinding.ItemChartsBinding;
 import org.dhis2.utils.DateUtils;
 import org.hisp.dhis.android.core.enrollment.chart.ChartModel;
@@ -17,13 +19,8 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         this.binding = binding;
     }
 
-    public void bind(ChartModel model){
+    public void bind(LineChart model){
 
-        if (model.storedDate() != null) {
-            binding.date.setText(DateUtils.uiDateFormat().format(model.storedDate()));
-        }
-        binding.chartText.setText(model.value());
-        binding.storeBy.setText(model.storedBy());
         binding.executePendingBindings();
         itemView.setOnClickListener(view->{
 

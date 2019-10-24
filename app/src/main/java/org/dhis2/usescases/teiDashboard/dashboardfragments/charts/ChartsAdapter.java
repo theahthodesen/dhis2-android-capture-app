@@ -1,11 +1,17 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
 import org.dhis2.R;
 import org.dhis2.databinding.ItemChartsBinding;
-import org.hisp.dhis.android.core.enrollment.chart.ChartModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,7 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
-    private List<ChartModel> charts;
+    private List<LineChart> charts;
 
     public int getItemCount(){
         return charts.size();
@@ -40,10 +46,12 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
     }
 
-    public void setItems(List<ChartModel> charts){
+    public void setItems(ChartsViewholder viewholder){
         this.charts = charts;
         notifyDataSetChanged();
     }
+
+
 
 
 }

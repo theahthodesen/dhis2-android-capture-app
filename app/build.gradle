@@ -18,6 +18,12 @@ repositories {
     maven {
         url("https://oss.sonatype.org/content/repositories/snapshots")
     }
+
+    //MPCharts
+    maven {
+        url 'https://jitpack.io'
+    }
+
     mavenCentral()
 }
 
@@ -375,6 +381,9 @@ dependencies {
 
     /*region SECURITY*/
     implementation 'com.scottyab:rootbeer-lib:0.0.7'
+
+    //MPCharts
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
 }
 

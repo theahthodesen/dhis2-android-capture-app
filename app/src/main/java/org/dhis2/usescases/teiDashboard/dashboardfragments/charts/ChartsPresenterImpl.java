@@ -4,6 +4,7 @@ package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.hisp.dhis.android.core.D2;
 
+
 import io.reactivex.disposables.CompositeDisposable;
 
 public class ChartsPresenterImpl implements ChartsContracts.Presenter{
@@ -33,6 +34,9 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
     public void init(ChartsContracts.View view) {
         this.view = view;
         this.compositeDisposable = new CompositeDisposable();
+
+
+
     }
 
 
