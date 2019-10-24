@@ -12,6 +12,8 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IFillFormatter;
+import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
@@ -74,6 +76,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         adapter = new ChartsAdapter();
         binding.chartsRecycler.setAdapter(adapter);
         LineChart chart = binding.getRoot().findViewById(R.id.chart);
+        ArrayList<LineDataSet> setForStyling = new ArrayList<>();
         /*int count = 0;
 
         Integer[] dataAge = {1, 2, 4, 6, 10, 12};
@@ -127,8 +130,8 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         dataSets.add(dataSet2);
         dataSets.add(dataSet);
         LineData data  = new LineData(dataSets);*/
-        LineData data = new LineData(readSDValues());
 
+        LineData data = new LineData(readSDValues());
 
         chart.setData(data);
         chart.getXAxis().setDrawGridLinesBehindData(true);
@@ -149,7 +152,6 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             reader = new BufferedReader(new InputStreamReader(inputStream));
 
             String line = reader.readLine();
-            //line = line.trim().replaceAll("\t", " ");
             String[] labels = line.split("\t");
             datasets = new ArrayList<>(labels.length-1);
             for(int i = 0; i < labels.length-1; i++){
@@ -157,7 +159,6 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             }
             line = reader.readLine();
             while (line != null){
-                //line = line.trim().replaceAll("\t", " ");
                 String[] values = line.split("\t");
                 int c = 1;
                 for(ArrayList<Entry> e : datasets){
@@ -170,9 +171,9 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             int count = 1;
             for(ArrayList<Entry> entries : datasets) {
 
-                LineDataSet set = new LineDataSet(entries, labels[count]);
-
-                sets.add(set);
+                LineDataSet dataset = new LineDataSet(entries, labels[count]);
+                dataset = setColor(dataset);
+                sets.add(dataset);
 
                 count +=1;
 
@@ -189,15 +190,70 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
     }
 
-    public ArrayList<ILineDataSet> setStyling(ArrayList<ILineDataSet> sets){
-
-        for(ILineDataSet set : sets){
+    public LineChart setStyling(LineChart chart, List<LineDataSet> sets){
 
 
+        int loop = sets.size()/2;
+        int middle = Math.round(sets.size()/2);
+        for(int i = 1; i < loop; i++){
+            int c = getColor(i);
+            sets.get(middle+i).setFillColor(c);
+            sets.get(middle-i).setFillColor(c);
+            sets.get(middle+i).setFillFormatter(new IFillFormatter() {
+            @Override
+            public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
+                // change the return value here to better understand the effect
+                //  return 600;
+                return chart.getAxisLeft().getAxisMaximum();
+            }});
+
+            sets.get(middle-i).setFillFormatter(new IFillFormatter() {
+                @Override
+                public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
+                    // change the return value here to better understand the effect
+                    //  return 600;
+                    return chart.getAxisLeft().getAxisMinimum();
+                }});
         }
 
-        return sets;
+        return chart;
     }
+
+    public int getColor(int i) {
+        int color = Color.GREEN;
+        switch(i) {
+            case 1: color = Color.YELLOW;
+                break;
+            case 2: color = Color.rgb(255,215,0);
+                break;
+            case 3: color = Color.RED;
+                break;
+        }
+        return color;
+    }
+
+    public LineDataSet setColor(LineDataSet dataset){
+        if(dataset.getLabel().contains("1") || dataset.getLabel().contains("0")){
+            dataset.setFillColor(Color.GREEN);
+        }
+        else if(dataset.getLabel().contains("2")){
+            dataset.setFillColor(Color.YELLOW);
+        }
+        else if(dataset.getLabel().contains("3")){
+            dataset.setFillColor(Color.rgb(255,215,0));
+        }
+        else if(dataset.getLabel().contains("4")){
+            dataset.setFillColor(Color.RED);
+        }
+        else{
+            dataset.setFillColor(Color.WHITE);
+        }
+        return dataset;
+
+    }
+
+
+
 
 
     //public Consumer<List<LineChart>> swapCharts() {
