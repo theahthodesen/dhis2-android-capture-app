@@ -1,4 +1,8 @@
 <resources>
+    <!--growth standard test-->
+    <string name="height_for_age">Height for age</string>
+    <string name="weight_for_age">Weight for age</string>
+    <string name="weight_for_height">Weight for height</string>
     <!--GENERAL-->
     <string name="app_name">Dhis2</string>
     <string name="logo_text">dhis</string>

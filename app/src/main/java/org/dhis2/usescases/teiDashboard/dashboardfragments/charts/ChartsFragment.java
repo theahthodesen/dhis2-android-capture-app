@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Path;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
@@ -82,80 +83,26 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
         adapter = new ChartsAdapter();
         binding.chartsRecycler.setAdapter(adapter);
-        LineChart chart = binding.getRoot().findViewById(R.id.chart);
-        ArrayList<LineDataSet> setForStyling = new ArrayList<>();
-        /*int count = 0;
+        binding.heightforage.setOnClickListener(this::set_height_for_age);
+        binding.weightforage.setOnClickListener(this::set_weight_for_age);
+        binding.weightforheight.setOnClickListener(this::set_weight_for_height);
 
-        Integer[] dataAge = {1, 2, 4, 6, 10, 12};
-        double [] dataWeight = {3.5, 3.6, 3.2, 4, 4.2, 5};
-
-        Integer[] SDnormalHA = {1, 2, 4, 6, 10, 12};
-        double [] SDnormalHW = {4.2, 4.5, 4.7, 4.9, 5, 5.7};
-
-        Integer[] SDnormalLA = {1, 2, 4, 6, 10, 12};
-        double [] SDnormalLW = {3.3, 3.5, 3.7, 4.2, 4.5, 4.7};
-
-        List<Entry> entries = new ArrayList<>();
-        List<Entry> entries1 = new ArrayList<>();
-        List<Entry> entries2 = new ArrayList<>();
-
-        for (Integer age : dataAge) {
-
-            entries.add(new Entry((float)age, (float)dataWeight[count]));
-            entries1.add(new Entry((float)SDnormalHA[count], (float)SDnormalHW[count]));
-            entries2.add(new Entry((float)SDnormalLA[count], (float)SDnormalLW[count]));
-            count++;
-        }
-
-        LineDataSet dataSet1 = new LineDataSet(entries1, "SD normal high");
-        LineDataSet dataSet2 = new LineDataSet(entries2, "SD normal low");
-
-
-        dataSet1.setFillAlpha(255);
-        dataSet1.setDrawFilled(true);
-        dataSet1.setDrawCircles(false);
-        dataSet1.setFillColor(Color.GREEN);
-        dataSet1.setColor(Color.GREEN);
-        dataSet1.setDrawValues(false);
-        dataSet1.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        dataSet2.setFillAlpha(255);
-        dataSet2.setDrawFilled(true);
-        dataSet2.setFillColor(Color.WHITE);
-        dataSet2.setColor(Color.GREEN);
-        dataSet2.setDrawCircles(false);
-        dataSet2.setDrawValues(false);
-        dataSet2.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-
-
-        LineDataSet dataSet = new LineDataSet(entries, "Weight for age");
-        dataSet.setCircleColor(Color.BLACK);
-        dataSet.setDrawFilled(true);
-        dataSet.setColor(Color.BLACK);
-
-        ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-        dataSets.add(dataSet1);
-        dataSets.add(dataSet2);
-        dataSets.add(dataSet);
-        LineData data  = new LineData(dataSets);*/
-
-        LineData data = new LineData(readSDValues());
-
-        chart.setData(data);
-        chart.getXAxis().setDrawGridLinesBehindData(true);
-        chart.setRenderer(new MyLineLegendRenderer(chart, chart.getAnimator(), chart.getViewPortHandler()));
-        chart.invalidate();
-
+        List<LineData> charts = new ArrayList<LineData>();
+        charts.add( new LineData(readSDValues("hfa_girls_z.txt")));
+        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
+        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
+        adapter.setItems(charts);
         return binding.getRoot();
     }
 
-    public ArrayList<ILineDataSet> readSDValues(){
+    public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
 
         BufferedReader reader;
         ArrayList<ArrayList<Entry>> datasets;
         ArrayList<ILineDataSet> sets = new ArrayList<>();
 
         try {
-            InputStream inputStream = getResources().getAssets().open("wfa_girls_z.txt");
+            InputStream inputStream = getResources().getAssets().open(nameOfFile);
             reader = new BufferedReader(new InputStreamReader(inputStream));
 
             String line = reader.readLine();
@@ -202,10 +149,29 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
         return sets;
 
-
+    }
+    public void resetTypefaceChart(){
+        binding.heightforage.setTypeface(null, Typeface.NORMAL);
+        binding.weightforheight.setTypeface(null, Typeface.NORMAL);
+        binding.weightforage.setTypeface(null, Typeface.NORMAL);
 
     }
+    public void set_weight_for_height(View i) {
+        resetTypefaceChart();
+        adapter.setchartType("weight_for_height");
+        binding.weightforheight.setTypeface(null, Typeface.BOLD);
 
+    }
+    public void set_weight_for_age(View i) {
+        resetTypefaceChart();
+        adapter.setchartType("weight_for_age");
+        binding.weightforage.setTypeface(null, Typeface.BOLD);
+    }
+    public void set_height_for_age(View i) {
+        resetTypefaceChart();
+        adapter.setchartType("height_for_age");
+        binding.heightforage.setTypeface(null, Typeface.BOLD);
+    }
     public LineChart setStyling(LineChart chart, List<LineDataSet> sets){
 
         int loop = sets.size()/2;

@@ -55,8 +55,6 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/noteInputLayout"
-            app:layout_constraintVertical_bias="1.0"
-            tools:layout_editor_absoluteX="-11dp"
             tools:listitem="@layout/item_notes" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -64,9 +62,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="15dp"
-            android:layout_marginStart="14dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="16dp"
             android:focusableInTouchMode="true"
             android:tint="@color/white"
             app:backgroundTint="?attr/colorPrimary"
@@ -75,9 +70,9 @@
             app:layout_behavior="org.dhis2.utils.FixedBottomViewBehavior"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toEndOf="@+id/notes_recycler"
             app:srcCompat="@drawable/ic_add_accent" />
+
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

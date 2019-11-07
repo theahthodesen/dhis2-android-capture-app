@@ -39,7 +39,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/edittext_material_border"
-                android:drawableStart="@drawable/ic_search"
+                app:drawableStartCompat="@drawable/ic_search"
                 android:drawablePadding="8dp"
                 android:hint="Search"
                 android:maxLines="1"
