@@ -12,7 +12,6 @@ import org.dhis2.utils.EventCreationType;
 import org.hisp.dhis.android.core.category.CategoryCombo;
 import org.hisp.dhis.android.core.category.CategoryOption;
 import org.hisp.dhis.android.core.category.CategoryOptionCombo;
-import org.hisp.dhis.android.core.common.FeatureType;
 import org.hisp.dhis.android.core.common.Geometry;
 import org.hisp.dhis.android.core.common.ObjectStyle;
 import org.hisp.dhis.android.core.event.Event;
@@ -37,15 +36,13 @@ public class EventInitialContract {
 
         void setProgram(@NonNull Program program);
 
-        void setCatComboOptions(CategoryCombo catCombo, Map<String, CategoryOption> stringCategoryOptionMap);
+        void setCatComboOptions(CategoryCombo catCombo, List<CategoryOptionCombo> categoryOptionCombos, Map<String, CategoryOption> stringCategoryOptionMap);
 
         void showDateDialog(DatePickerDialog.OnDateSetListener listener);
 
         void renderError(String message);
 
         void setEvent(Event event);
-
-//        void setLocation(Geometry geometry);
 
         void onEventCreated(String eventUid);
 
@@ -78,11 +75,11 @@ public class EventInitialContract {
 
         void runSmsSubmission();
 
+        void setInitialOrgUnit(OrganisationUnit organisationUnit);
+
         EventCreationType eventcreateionType();
 
-        void latitudeWarning(boolean showWarning);
 
-        void longitudeWarning(boolean showWarning);
     }
 
     public interface Presenter extends AbstractActivityContracts.Presenter {
@@ -114,17 +111,9 @@ public class EventInitialContract {
 
         void onLocationClick();
 
-        void onLocation2Click(FeatureType featureType);
-
-        void onLatChanged(CharSequence s, int start, int before, int count);
-
-        void onLonChanged(CharSequence s, int start, int before, int count);
-
         void onFieldChanged(CharSequence s, int start, int before, int count);
 
         void getSectionCompletion(@Nullable String sectionUid);
-
-        void goToSummary();
 
         void getEventSections(@NonNull String eventId);
 
@@ -143,6 +132,8 @@ public class EventInitialContract {
         Date getStageLastDate(String programStageUid, String enrollmentUid);
 
         void getEventOrgUnit(String ouUid);
+
+        void initOrgunit(Date selectedDate);
     }
 
 }

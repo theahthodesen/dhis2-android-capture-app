@@ -11,16 +11,6 @@ import android.util.TypedValue;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkContinuation;
-import androidx.work.WorkManager;
-
-import org.dhis2.data.service.files.FilesWorker;
-import org.hisp.dhis.android.core.fileresource.FileResource;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,67 +34,11 @@ public class FileResourcesUtil {
         return uploadDirectory;
     }
 
-    public static File getCacheDirectory(Context context) {
-        File cacheDirectory = new File(context.getCacheDir(), "cache");
-        if(!cacheDirectory.exists())
-            cacheDirectory.mkdirs();
-        return cacheDirectory;
-    }
-
     public static File getDownloadDirectory(Context context) {
         File downloadDirectory = new File(context.getFilesDir(), "download");
         if (!downloadDirectory.exists())
             downloadDirectory.mkdirs();
         return downloadDirectory;
-    }
-
-    public static void initFileUploadWork(String teiUid, String attrUid) {
-        OneTimeWorkRequest.Builder fileBuilder = new OneTimeWorkRequest.Builder(FilesWorker.class);
-        fileBuilder.addTag(teiUid.concat("_").concat(attrUid));
-        fileBuilder.setConstraints(new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build());
-        fileBuilder.setInputData(new Data.Builder()
-                .putString(FilesWorker.MODE, FilesWorker.FileMode.UPLOAD.name())
-                .putString(FilesWorker.TEIUID, teiUid)
-                .putString(FilesWorker.ATTRUID, attrUid)
-                .build());
-        OneTimeWorkRequest requestFile = fileBuilder.build();
-        WorkManager.getInstance().beginUniqueWork(teiUid.concat(".").concat(attrUid), ExistingWorkPolicy.REPLACE, requestFile).enqueue();
-    }
-
-
-    public static WorkContinuation initBulkFileUploadWork() {
-
-        return WorkManager.getInstance().beginUniqueWork(FilesWorker.TAG_UPLOAD, ExistingWorkPolicy.REPLACE, initBulkFileUploadRequest());
-    }
-
-    public static OneTimeWorkRequest initBulkFileUploadRequest() {
-        OneTimeWorkRequest.Builder fileBuilder = new OneTimeWorkRequest.Builder(FilesWorker.class);
-        fileBuilder.addTag(FilesWorker.TAG_UPLOAD);
-        fileBuilder.setConstraints(new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build());
-        fileBuilder.setInputData(new Data.Builder()
-                .putString(FilesWorker.MODE, FilesWorker.FileMode.UPLOAD.name())
-                .build());
-        return fileBuilder.build();
-    }
-
-    public static WorkContinuation initDownloadWork() {
-        return WorkManager.getInstance().beginUniqueWork(FilesWorker.TAG, ExistingWorkPolicy.REPLACE, initDownloadRequest());
-    }
-
-    public static OneTimeWorkRequest initDownloadRequest() {
-        OneTimeWorkRequest.Builder fileBuilder = new OneTimeWorkRequest.Builder(FilesWorker.class);
-        fileBuilder.addTag(FilesWorker.TAG);
-        fileBuilder.setConstraints(new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build());
-        fileBuilder.setInputData(new Data.Builder()
-                .putString(FilesWorker.MODE, FilesWorker.FileMode.DOWNLOAD.name())
-                .build());
-        return fileBuilder.build();
     }
 
     public static void saveImageToUpload(File src, File dst) {
@@ -145,26 +79,12 @@ public class FileResourcesUtil {
         return fromUpload.exists() ? fromUpload : fromDownload;
     }
 
-    public static File saveBitmapToUpload(Context context, Bitmap bitmap, String fileName) {
-        File destDirectory = new File(getUploadDirectory(context), fileName + ".png");
-        OutputStream os;
-        try {
-            os = new FileOutputStream(destDirectory);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
-            os.close();
-        } catch (Exception e) {
-            Timber.e(e);
-        }
-
-        return destDirectory;
-    }
-
     public static Bitmap getSmallImage(Context context, String filePath) {
         File file = new File(filePath);
 
         Bitmap bitmap = BitmapFactory.decodeFile(file.getPath());
 
-        int desired = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, context.getResources().getDisplayMetrics());
+        int desired = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 36, context.getResources().getDisplayMetrics());
 
         Bitmap dstBitmap;
         if (bitmap.getWidth() >= bitmap.getHeight()) {
@@ -178,17 +98,6 @@ public class FileResourcesUtil {
 
     public static String generateFileName(String primaryUid, String secundaryUid) {
         return String.format("%s_%s.png", primaryUid, secundaryUid);
-    }
-
-    public static String generateFileName(String name) {
-        return String.format("%s.png", name);
-    }
-
-    public static File getCacheFile(Context context, String fileName) {
-        File tempFile = new File(context.getCacheDir(), fileName);
-        if(!tempFile.exists())
-            tempFile.mkdirs();
-        return tempFile;
     }
 
     public static boolean writeToFile(@NonNull String content, @Nullable String secretToEncode) {
@@ -243,9 +152,5 @@ public class FileResourcesUtil {
         }
         reader.close();
         return sb.toString();
-    }
-
-    public static String getFileResourceFullPath(FileResource fileResource) {
-        return String.format("%s/%s.%s", fileResource.path(), fileResource.uid(), fileResource.contentType().replace("image/", ""));
     }
 }

@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import org.dhis2.R;
+import org.dhis2.usescases.teiDashboard.dashboardfragments.charts.ChartsFragment;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.indicators.IndicatorsFragment;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.notes.NotesFragment;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.relationships.RelationshipFragment;
@@ -20,13 +21,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class DashboardPagerAdapter extends FragmentStatePagerAdapter {
 
-    private static final int MOVILE_DASHBOARD_SIZE = 4;
+
+    private static final int MOBILE_DASHBOARD_SIZE = 5;
+
     private String currentProgram;
     private Context context;
 
 
     public DashboardPagerAdapter(Context context, FragmentManager fm, String program) {
-        super(fm);
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         this.context = context;
         this.currentProgram = program;
     }
@@ -41,28 +44,34 @@ public class DashboardPagerAdapter extends FragmentStatePagerAdapter {
     private RelationshipFragment relationshipFragment;
     private NotesFragment notesFragment;
     private TEIDataFragment teiDataFragment;
+    private ChartsFragment chartsFragment;
 
     @NotNull
     @Override
     public Fragment getItem(int position) {
         switch (position) {
             case 1:
-                if (indicatorsFragment == null){
+                if (indicatorsFragment == null) {
                     indicatorsFragment = new IndicatorsFragment();
                 }
                 return indicatorsFragment;
             case 2:
-                if (relationshipFragment == null){
+                if (relationshipFragment == null) {
                     relationshipFragment = new RelationshipFragment();
                 }
                 return relationshipFragment;
             case 3:
-                if (notesFragment == null){
+                if (notesFragment == null) {
                     notesFragment = new NotesFragment();
                 }
                 return notesFragment;
+            case 4:
+                if (chartsFragment == null){
+                    chartsFragment = new ChartsFragment();
+                }
+                return chartsFragment;
             default:
-                if (teiDataFragment == null){
+                if (teiDataFragment == null) {
                     teiDataFragment = new TEIDataFragment();
                 }
                 return teiDataFragment;
@@ -71,7 +80,7 @@ public class DashboardPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        return currentProgram != null ? MOVILE_DASHBOARD_SIZE : 1;
+        return currentProgram != null ? MOBILE_DASHBOARD_SIZE : 1;
     }
 
     @Override
@@ -85,6 +94,8 @@ public class DashboardPagerAdapter extends FragmentStatePagerAdapter {
                 return context.getString(R.string.dashboard_relationships);
             case 3:
                 return context.getString(R.string.dashboard_notes);
+            case 4:
+                return context.getString(R.string.dashboard_charts);
         }
     }
 }

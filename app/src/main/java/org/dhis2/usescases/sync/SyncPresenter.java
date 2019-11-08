@@ -8,12 +8,14 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import org.dhis2.R;
+import org.dhis2.data.schedulers.SchedulerProvider;
 import org.dhis2.data.service.ReservedValuesWorker;
 import org.dhis2.data.service.SyncDataWorker;
 import org.dhis2.data.service.SyncInitWorker;
 import org.dhis2.data.service.SyncMetadataWorker;
 import org.dhis2.data.tuples.Pair;
 import org.dhis2.utils.Constants;
+import org.dhis2.utils.FileResourcesUtil;
 import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.android.core.settings.SystemSetting;
 
@@ -27,13 +29,15 @@ import timber.log.Timber;
 public class SyncPresenter implements SyncContracts.Presenter {
 
     private final D2 d2;
+    private final SchedulerProvider schedulerProvider;
     private SyncContracts.View view;
 
     private CompositeDisposable disposable;
 
 
-    SyncPresenter(D2 d2) {
+    SyncPresenter(D2 d2, SchedulerProvider schedulerProvider) {
         this.d2 = d2;
+        this.schedulerProvider = schedulerProvider;
     }
 
     @Override
@@ -45,6 +49,7 @@ public class SyncPresenter implements SyncContracts.Presenter {
 
     @Override
     public void sync() {
+        //META WORK REQUEST
         OneTimeWorkRequest.Builder syncMetaBuilder = new OneTimeWorkRequest.Builder(SyncMetadataWorker.class);
         syncMetaBuilder.addTag(Constants.META_NOW);
         syncMetaBuilder.setConstraints(new Constraints.Builder()
@@ -52,6 +57,7 @@ public class SyncPresenter implements SyncContracts.Presenter {
                 .build());
         OneTimeWorkRequest metaRequest = syncMetaBuilder.build();
 
+        //DATA WORK REQUEST
         OneTimeWorkRequest.Builder syncDataBuilder = new OneTimeWorkRequest.Builder(SyncDataWorker.class);
         syncDataBuilder.addTag(Constants.DATA_NOW);
         syncDataBuilder.setConstraints(new Constraints.Builder()
@@ -59,6 +65,7 @@ public class SyncPresenter implements SyncContracts.Presenter {
                 .build());
         OneTimeWorkRequest dataRequest = syncDataBuilder.build();
 
+        //FULL REQUEST
         WorkManager.getInstance(view.getContext().getApplicationContext())
                 .beginUniqueWork(Constants.INITIAL_SYNC, ExistingWorkPolicy.KEEP, metaRequest)
                 .then(dataRequest)
@@ -100,34 +107,35 @@ public class SyncPresenter implements SyncContracts.Presenter {
                 .enqueueUniqueWork(Constants.INIT_DATA, ExistingWorkPolicy.REPLACE, initDataBuilder.build());
     }
 
+    @Override
     public void getTheme() {
-        disposable.add(d2.systemSettingModule().systemSetting.get().toObservable()
-                .map(systemSettings -> {
-                    String flag = "";
-                    String style = "";
-                    for (SystemSetting settingModel : systemSettings)
-                        if (settingModel.key().equals("style"))
-                            style = settingModel.value();
-                        else
-                            flag = settingModel.value();
-
-                    if (style.contains("green"))
-                        return Pair.create(flag, R.style.GreenTheme);
-                    if (style.contains("india"))
-                        return Pair.create(flag, R.style.OrangeTheme);
-                    if (style.contains("myanmar"))
-                        return Pair.create(flag, R.style.RedTheme);
-                    else
-                        return Pair.create(flag, R.style.AppTheme);
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(flagTheme -> {
-                            view.saveFlag(flagTheme.val0());
-                            view.saveTheme(flagTheme.val1());
-                        }, Timber::e
-                ));
-
+        disposable.add(
+                d2.systemSettingModule().systemSetting().get()
+                        .map(systemSettings -> {
+                            String style = "";
+                            String flag = "";
+                            for (SystemSetting setting : systemSettings) {
+                                if (setting.key() == SystemSetting.SystemSettingKey.STYLE)
+                                    style = setting.value();
+                                else
+                                    flag = setting.value();
+                            }
+                            if (style.contains("green"))
+                                return Pair.create(flag, R.style.GreenTheme);
+                            if (style.contains("india"))
+                                return Pair.create(flag, R.style.OrangeTheme);
+                            if (style.contains("myanmar"))
+                                return Pair.create(flag, R.style.RedTheme);
+                            else
+                                return Pair.create(flag, R.style.AppTheme);
+                        })
+                        .subscribeOn(schedulerProvider.io())
+                        .observeOn(schedulerProvider.ui())
+                        .subscribe(flagTheme -> {
+                                    view.saveFlag(flagTheme.val0());
+                                    view.saveTheme(flagTheme.val1());
+                                }, Timber::e
+                        ));
     }
 
     @Override

@@ -2,6 +2,7 @@ package org.dhis2.usescases.programStageSelection;
 
 import androidx.annotation.NonNull;
 
+import org.dhis2.data.schedulers.SchedulerProvider;
 import org.dhis2.utils.Result;
 import org.dhis2.utils.RulesUtilsProvider;
 import org.hisp.dhis.android.core.program.ProgramStage;
@@ -15,7 +16,6 @@ import java.util.Map;
 import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 /**
@@ -25,13 +25,15 @@ import timber.log.Timber;
 public class ProgramStageSelectionPresenter implements ProgramStageSelectionContract.Presenter {
 
     private final RulesUtilsProvider ruleUtils;
+    private final SchedulerProvider schedulerProvider;
     private ProgramStageSelectionContract.View view;
     private CompositeDisposable compositeDisposable;
     private ProgramStageSelectionRepository programStageSelectionRepository;
 
-    ProgramStageSelectionPresenter(ProgramStageSelectionRepository programStageSelectionRepository, RulesUtilsProvider ruleUtils) {
+    ProgramStageSelectionPresenter(ProgramStageSelectionRepository programStageSelectionRepository, RulesUtilsProvider ruleUtils, SchedulerProvider schedulerProvider) {
         this.programStageSelectionRepository = programStageSelectionRepository;
         this.ruleUtils = ruleUtils;
+        this.schedulerProvider = schedulerProvider;
         compositeDisposable = new CompositeDisposable();
     }
 
@@ -46,16 +48,17 @@ public class ProgramStageSelectionPresenter implements ProgramStageSelectionCont
         this.view = view;
 
         Flowable<List<ProgramStage>> stagesFlowable = programStageSelectionRepository.enrollmentProgramStages(programId, uid);
-
-        Flowable<Result<RuleEffect>> ruleEffectFlowable = programStageSelectionRepository.calculate().subscribeOn(Schedulers.computation())
-                .onErrorReturn(throwable -> Result.failure(new Exception(throwable)));
+        Flowable<Result<RuleEffect>> ruleEffectFlowable = programStageSelectionRepository.calculate();
 
         // Combining results of two repositories into a single stream.
-        Flowable<List<ProgramStage>> stageModelsFlowable = Flowable.zip(stagesFlowable, ruleEffectFlowable, this::applyEffects);
+        Flowable<List<ProgramStage>> stageModelsFlowable = Flowable.zip(
+                stagesFlowable.subscribeOn(schedulerProvider.io()),
+                ruleEffectFlowable.subscribeOn(schedulerProvider.io()),
+                this::applyEffects);
 
         compositeDisposable.add(stageModelsFlowable
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(schedulerProvider.io())
+                .observeOn(schedulerProvider.ui())
                 .subscribe(
                         view::setData,
                         Timber::e));

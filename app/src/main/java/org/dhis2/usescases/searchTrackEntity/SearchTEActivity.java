@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -67,7 +68,7 @@ import org.dhis2.data.forms.dataentry.fields.RowAction;
 import org.dhis2.data.tuples.Trio;
 import org.dhis2.databinding.ActivitySearchBinding;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
-import org.dhis2.usescases.org_unit_selector.OUTreeActivity;
+import org.dhis2.usescases.orgunitselector.OUTreeActivity;
 import org.dhis2.usescases.searchTrackEntity.adapters.FormAdapter;
 import org.dhis2.usescases.searchTrackEntity.adapters.RelationshipLiveAdapter;
 import org.dhis2.usescases.searchTrackEntity.adapters.SearchTeiLiveAdapter;
@@ -81,6 +82,7 @@ import org.dhis2.utils.filters.FilterManager;
 import org.dhis2.utils.filters.FiltersAdapter;
 import org.dhis2.utils.maps.MapLayerDialog;
 import org.dhis2.utils.maps.MapLayerManager;
+import org.dhis2.utils.maps.MarkerUtils;
 import org.hisp.dhis.android.core.arch.call.D2Progress;
 import org.hisp.dhis.android.core.common.FeatureType;
 import org.hisp.dhis.android.core.program.Program;
@@ -104,9 +106,13 @@ import static com.mapbox.mapboxsdk.style.expressions.Expression.get;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.textAllowOverlap;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CHANGE_PROGRAM;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CLICK;
+import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 /**
  * QUADRAM. Created by ppajuelo on 02/11/2017 .
@@ -180,7 +186,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
         initialProgram = getIntent().getStringExtra("PROGRAM_UID");
         binding.setNeedsSearch(needsSearch);
         binding.setTotalFilters(FilterManager.getInstance().getTotalFilters());
-        binding.setTotalFiltersSearch(0);
+        binding.setTotalFiltersSearch(presenter.getQueryData().size());
 
         try {
             fromRelationship = getIntent().getBooleanExtra("FROM_RELATIONSHIP", false);
@@ -233,6 +239,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
         binding.mapView.onResume();
         presenter.init(this, tEType, initialProgram);
         presenter.initSearch(this);
+        updateFiltersSearch(presenter.getQueryData().size());
         registerReceiver(networkReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
         binding.setTotalFilters(FilterManager.getInstance().getTotalFilters());
         filtersAdapter.notifyDataSetChanged();
@@ -281,6 +288,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
     @Override
     public void updateFiltersSearch(int totalFilters) {
         binding.setTotalFiltersSearch(totalFilters);
+        binding.executePendingBindings();
     }
 
     @Override
@@ -310,6 +318,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.showHelp:
+                    analyticsHelper().setEvent(SHOW_HELP, CLICK, SHOW_HELP);
                     showTutorial(false);
                     break;
                 case R.id.menu_list:
@@ -323,9 +332,17 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
             }
             return false;
         });
-        popupMenu.getMenu().getItem(0).setVisible(binding.mapView.getVisibility() == View.GONE && featureType != FeatureType.NONE);
-        popupMenu.getMenu().getItem(1).setVisible(binding.scrollView.getVisibility() == View.GONE && featureType != FeatureType.NONE);
-        popupMenu.show();
+
+        boolean messageIsVisible = binding.messageContainer.getVisibility() == View.VISIBLE;
+        boolean progressIsVisible = binding.progressLayout.getVisibility() == View.VISIBLE;
+        boolean mapIsVisible = binding.mapView.getVisibility() == View.VISIBLE;
+        boolean teiListIsVisible = binding.scrollView.getVisibility() == View.VISIBLE;
+
+
+        popupMenu.getMenu().getItem(0).setVisible(!messageIsVisible && !mapIsVisible && featureType != FeatureType.NONE);
+        popupMenu.getMenu().getItem(1).setVisible(!messageIsVisible && !teiListIsVisible && featureType != FeatureType.NONE);
+        if (!progressIsVisible)
+            popupMenu.show();
     }
 
     //endregion
@@ -336,7 +353,8 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
     private void showMap(boolean showMap) {
         binding.scrollView.setVisibility(showMap ? View.GONE : View.VISIBLE);
         binding.mapView.setVisibility(showMap ? View.VISIBLE : View.GONE);
-        binding.mapLayerButton.setVisibility(showMap ? View.VISIBLE : View.GONE);
+        if (!showMap)
+            binding.mapLayerButton.setVisibility(View.GONE);
 
         if (showMap)
             presenter.getMapData();
@@ -350,7 +368,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
         //Form has been set.
         FormAdapter formAdapter = (FormAdapter) binding.formRecycler.getAdapter();
         formAdapter.setList(trackedEntityAttributes, program, queryData);
-        updateFiltersSearch(0);
+        updateFiltersSearch(queryData.size());
     }
 
     @NonNull
@@ -411,6 +429,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
                     binding.progressLayout.setVisibility(View.GONE);
                     binding.messageContainer.setVisibility(View.VISIBLE);
                     binding.message.setText(data.val1());
+                    binding.scrollView.setVisibility(View.GONE);
                 }
                 if (!presenter.getQueryData().isEmpty() && data.val2())
                     setFabIcon(false);
@@ -450,6 +469,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
                 if (pos > 0) {
+                    analyticsHelper().setEvent(CHANGE_PROGRAM, CLICK, CHANGE_PROGRAM);
                     Program selectedProgram = (Program) adapterView.getItemAtPosition(pos - 1);
                     setProgramColor(presenter.getProgramColor(selectedProgram.uid()));
                     presenter.setProgram((Program) adapterView.getItemAtPosition(pos - 1));
@@ -577,7 +597,8 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
         }
         binding.filterOpen.setVisibility(backDropActive ? View.VISIBLE : View.GONE);
 
-        activeFilter(general);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            activeFilter(general);
     }
 
     private void activeFilter(boolean general) {
@@ -645,11 +666,14 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
                     map = mapboxMap;
                     if (map.getStyle() == null) {
                         map.setStyle(Style.MAPBOX_STREETS, style -> {
+                                    binding.mapLayerButton.setVisibility(View.VISIBLE);
                                     MapLayerManager.Companion.init(style, "teis", featureType);
                                     MapLayerManager.Companion.instance().setEnrollmentLayerData(
-                                            ColorUtils.getColorFrom(presenter.getProgram().style() != null ? presenter.getProgram().style().color() : null, ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY)),
+                                            presenter.getProgram() != null ?
+                                                    ColorUtils.getColorFrom(presenter.getProgram().style() != null ? presenter.getProgram().style().color() : null, ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY)) :
+                                                    ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY),
                                             ColorUtils.getPrimaryColor(this, ColorUtils.ColorType.PRIMARY_DARK),
-                                            presenter.getProgram().featureType() != null ? presenter.getProgram().featureType() : FeatureType.NONE
+                                            presenter.getProgram() != null ? presenter.getProgram().featureType() != null ? presenter.getProgram().featureType() : FeatureType.NONE : FeatureType.NONE
                                     );
                                     MapLayerManager.Companion.instance().showEnrollmentLayer().observe(this, show -> {
                                         if (show)
@@ -657,8 +681,8 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
                                     });
                                     map.addOnMapClickListener(this);
 
-                                    style.addImage("ICON_ID", presenter.getSymbolIcon());
-                                    style.addImage("ICON_ENROLLMENT_ID", presenter.getEnrollmentSymbolIcon());
+                                    style.addImage("ICON_ID", MarkerUtils.INSTANCE.getMarker(this, presenter.getSymbolIcon(), presenter.getTEIColor()));
+                                    style.addImage("ICON_ENROLLMENT_ID", MarkerUtils.INSTANCE.getMarker(this, presenter.getEnrollmentSymbolIcon(), presenter.getEnrollmentColor()));
 
                                     setSource(style, data.component1());
 
@@ -687,17 +711,18 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
                             if (file.exists()) {
                                 Style style = mapboxMap.getStyle();
                                 if (style != null) {
-                                    style.addImageAsync(filePath, FileResourcesUtil.getSmallImage(this, filePath));
+                                    style.addImageAsync(filePath, MarkerUtils.INSTANCE.getMarker(this, FileResourcesUtil.getSmallImage(this, filePath), presenter.getTEIColor()));
                                 }
                             } else {
                                 Style style = mapboxMap.getStyle();
                                 if (style != null) {
-                                    style.addImageAsync(filePath, presenter.getSymbolIcon());
+                                    style.addImageAsync(filePath, MarkerUtils.INSTANCE.getMarker(this, presenter.getSymbolIcon(), presenter.getTEIColor()));
                                 }
                             }
                         });
 
                     } else {
+                        binding.mapLayerButton.setVisibility(View.VISIBLE);
                         ((GeoJsonSource) mapboxMap.getStyle().getSource("teis")).setGeoJson(data.component1().get("TEI"));
                         ((GeoJsonSource) mapboxMap.getStyle().getSource("enrollments")).setGeoJson(data.component1().get("ENROLLMENT"));
                         LatLngBounds bounds = LatLngBounds.from(data.component2().north(),
@@ -723,7 +748,12 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
 
     @Override
     public Consumer<D2Progress> downloadProgress() {
-        return progress -> Snackbar.make(binding.getRoot(), String.format("Downloading %s", String.valueOf(progress.percentage())) + "%", Snackbar.LENGTH_SHORT);
+        return progress -> Snackbar.make(binding.getRoot(), String.format("Downloading %s", String.valueOf(progress.percentage())) + "%", Snackbar.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean isMapVisible() {
+        return binding.mapView.getVisibility() == View.VISIBLE;
     }
 
     private void setSource(Style style, HashMap<String, FeatureCollection> featCollectionMap) {
@@ -735,6 +765,7 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
 
         SymbolLayer symbolLayer = new SymbolLayer("POINT_LAYER", "teis").withProperties(
                 PropertyFactory.iconImage(get("teiImage")),
+                iconOffset(new Float[]{0f, -25f}),
                 iconAllowOverlap(true),
                 textAllowOverlap(true)
         );
@@ -744,33 +775,25 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
         style.addLayer(symbolLayer);
 
         if (featureType != FeatureType.POINT) {
-            style.addLayer(new FillLayer("POLYGON_LAYER", "teis")
-                    .withProperties(
-                            fillColor(
-                                    ColorUtils.getPrimaryColorWithAlpha(this, ColorUtils.ColorType.PRIMARY_LIGHT, 150f)
-                            ))
-                    .withFilter(eq(literal("$type"), literal("Polygon")))
+            style.addLayerBelow(new FillLayer("POLYGON_LAYER", "teis")
+                            .withProperties(
+                                    fillColor(
+                                            ColorUtils.getPrimaryColorWithAlpha(this, ColorUtils.ColorType.PRIMARY_LIGHT, 150f)
+                                    ))
+                            .withFilter(eq(literal("$type"), literal("Polygon"))),
+                    "POINT_LAYER"
             );
-            style.addLayer(new LineLayer("POLYGON_BORDER_LAYER", "teis")
-                    .withProperties(
-                            lineColor(
-                                    ColorUtils.getPrimaryColor(this, ColorUtils.ColorType.PRIMARY_DARK)
-                            ),
-                            lineWidth(2f))
-                    .withFilter(eq(literal("$type"), literal("Polygon")))
+            style.addLayerAbove(new LineLayer("POLYGON_BORDER_LAYER", "teis")
+                            .withProperties(
+                                    lineColor(
+                                            ColorUtils.getPrimaryColor(this, ColorUtils.ColorType.PRIMARY_DARK)
+                                    ),
+                                    lineWidth(2f))
+                            .withFilter(eq(literal("$type"), literal("Polygon"))),
+                    "POLYGON_LAYER"
 
             );
         }
-
-        /*SymbolLayer countLayer = new SymbolLayer("count", "teis").withProperties(
-                textField(Expression.toString(get("point_count"))),
-                textSize(12f),
-                textColor(Color.BLACK),
-                textIgnorePlacement(true),
-                textOffset(new Float[]{-1.5f,0f}),
-                textAllowOverlap(true)
-        );
-        style.addLayer(countLayer);*/
     }
 
     @Override

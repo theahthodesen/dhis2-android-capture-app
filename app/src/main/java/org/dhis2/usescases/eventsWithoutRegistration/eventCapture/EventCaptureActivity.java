@@ -4,6 +4,7 @@ import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.Gravity;
@@ -22,8 +23,8 @@ import com.google.android.material.snackbar.Snackbar;
 
 import org.dhis2.App;
 import org.dhis2.R;
-import org.dhis2.data.tuples.Pair;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
+import org.dhis2.data.tuples.Pair;
 import org.dhis2.databinding.ActivityEventCaptureBinding;
 import org.dhis2.databinding.WidgetDatepickerBinding;
 import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity;
@@ -32,9 +33,12 @@ import org.dhis2.utils.ColorUtils;
 import org.dhis2.utils.Constants;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.DialogClickListener;
-import org.dhis2.utils.custom_views.CustomDialog;
-import org.dhis2.utils.custom_views.FormBottomDialog;
+import org.dhis2.utils.FileResourcesUtil;
+import org.dhis2.utils.customviews.CustomDialog;
+import org.dhis2.utils.customviews.FormBottomDialog;
+import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Calendar;
@@ -46,6 +50,9 @@ import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
 import static org.dhis2.utils.Constants.PROGRAM_UID;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CLICK;
+import static org.dhis2.utils.analytics.AnalyticsConstants.DELETE_EVENT;
+import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 /**
  * QUADRAM. Created by ppajuelo on 19/11/2018.
@@ -110,6 +117,31 @@ public class EventCaptureActivity extends ActivityGlobalAbstract implements Even
     protected void onDestroy() {
         presenter.onDettach();
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (requestCode) {
+            case Constants.GALLERY_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    Uri imageUri = data.getData();
+                    presenter.saveImage(uuid, FileResourcesUtil.getFileFromGallery(this, imageUri).getPath());
+                    presenter.nextCalculation(true);
+                }
+                break;
+            case Constants.CAMERA_REQUEST:
+                if (resultCode == RESULT_OK) {
+                    File file = new File(FileResourceDirectoryHelper.getFileResourceDirectory(this), "tempFile.png");
+                    if (file.exists()) {
+                        presenter.saveImage(uuid, file.getPath());
+                    } else
+                        presenter.saveImage(uuid, null);
+                    presenter.nextCalculation(true);
+                }
+                break;
+        }
     }
 
     @Override
@@ -212,6 +244,11 @@ public class EventCaptureActivity extends ActivityGlobalAbstract implements Even
                 finishDataEntry();
                 break;
         }
+    }
+
+    @Override
+    public void showErrorSnackBar() {
+        showSnackBar(R.string.fix_error);
     }
 
     private void reschedule() {
@@ -376,6 +413,7 @@ public class EventCaptureActivity extends ActivityGlobalAbstract implements Even
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.showHelp:
+                    analyticsHelper().setEvent(SHOW_HELP, CLICK, SHOW_HELP);
                     showTutorial(false);
                     break;
                 case R.id.menu_delete:
@@ -418,6 +456,7 @@ public class EventCaptureActivity extends ActivityGlobalAbstract implements Even
                 new DialogClickListener() {
                     @Override
                     public void onPositive() {
+                        analyticsHelper().setEvent(DELETE_EVENT, CLICK, DELETE_EVENT);
                         presenter.deleteEvent();
                     }
 

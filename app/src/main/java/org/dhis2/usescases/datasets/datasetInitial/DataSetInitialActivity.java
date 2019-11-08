@@ -1,10 +1,7 @@
 package org.dhis2.usescases.datasets.datasetInitial;
 
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.Menu;
 import android.view.View;
-import android.widget.PopupMenu;
 
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -18,9 +15,10 @@ import org.dhis2.databinding.ItemCategoryComboBinding;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
 import org.dhis2.utils.Constants;
 import org.dhis2.utils.DateUtils;
-import org.dhis2.utils.custom_views.OrgUnitDialog;
-import org.dhis2.utils.custom_views.PeriodDialog;
-import org.dhis2.utils.custom_views.PeriodDialogInputPeriod;
+import org.dhis2.utils.customviews.CategoryOptionPopUp;
+import org.dhis2.utils.customviews.OrgUnitDialog;
+import org.dhis2.utils.customviews.PeriodDialog;
+import org.dhis2.utils.customviews.PeriodDialogInputPeriod;
 import org.hisp.dhis.android.core.category.Category;
 import org.hisp.dhis.android.core.category.CategoryOption;
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnit;
@@ -49,9 +47,9 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         dataSetUid = getIntent().getStringExtra(Constants.DATA_SET_UID);
         ((App) getApplicationContext()).userComponent().plus(new DataSetInitialModule(dataSetUid)).inject(this);
+        super.onCreate(savedInstanceState);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_dataset_initial);
         binding.setPresenter(presenter);
@@ -95,6 +93,18 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
         checkActionVisivbility();
     }
 
+    private void clearCatOptionCombo(){
+        if(!binding.getDataSetModel().categoryComboName().equals("default")){
+            for(int i=0; i<binding.catComboContainer.getChildCount();i++){
+                View catView = binding.catComboContainer.getChildAt(i);
+                ((TextInputEditText)catView.findViewById(R.id.input_editText)).setText(null);
+            }
+            for (Category categories : binding.getDataSetModel().getCategories()) {
+                selectedCatOptions.put(categories.uid(), null);
+            }
+        }
+    }
+
     /**
      * When changing orgUnit, date must be cleared
      */
@@ -112,7 +122,9 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
                         if (selectedOrgUnit == null)
                             orgUnitDialog.dismiss();
                         binding.dataSetOrgUnitEditText.setText(selectedOrgUnit.displayName());
-                        binding.dataSetPeriodEditText.setText("");
+                        binding.dataSetPeriodEditText.setText(null);
+                        selectedPeriod = null;
+                        clearCatOptionCombo();
                     }
                     checkActionVisivbility();
                     orgUnitDialog.dismiss();
@@ -123,15 +135,23 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
 
     @Override
     public void showPeriodSelector(PeriodType periodType, List<DateRangeInputPeriodModel> periods, Integer openFuturePeriods) {
-        new PeriodDialogInputPeriod()
-                .setInputPeriod(periods)
+        PeriodDialogInputPeriod periodDialog = new PeriodDialogInputPeriod();
+        periodDialog.setInputPeriod(periods)
                 .setOpenFuturePeriods(openFuturePeriods)
                 .setPeriod(periodType)
+                .setTitle(binding.dataSetPeriodInputLayout.getHint().toString())
                 .setPossitiveListener(selectedDate -> {
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime(selectedDate);
                     this.selectedPeriod = calendar.getTime();
                     binding.dataSetPeriodEditText.setText(DateUtils.getInstance().getPeriodUIString(periodType, selectedDate, Locale.getDefault()));
+                    clearCatOptionCombo();
+                    checkActionVisivbility();
+                    periodDialog.dismiss();
+                })
+                .setNegativeListener(v -> {
+                    this.selectedPeriod = null;
+                    binding.dataSetPeriodEditText.setText(null);
                     checkActionVisivbility();
                 })
                 .show(getSupportFragmentManager(), PeriodDialog.class.getSimpleName());
@@ -145,20 +165,19 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
             selectedCatOptions.put(catOptionUid, data.get(0));
         } else {
 
-            PopupMenu menu = new PopupMenu(this, selectedView, Gravity.BOTTOM);
-            for (CategoryOption option : data)
-                menu.getMenu().add(Menu.NONE, Menu.NONE, data.indexOf(option), option.displayName());
-
-            menu.setOnDismissListener(menu1 -> selectedView = null);
-            menu.setOnMenuItemClickListener(item -> {
-                if (selectedCatOptions == null)
-                    selectedCatOptions = new HashMap<>();
-                selectedCatOptions.put(catOptionUid, data.get(item.getOrder()));
-                ((TextInputEditText) selectedView).setText(data.get(item.getOrder()).displayName());
-                checkActionVisivbility();
-                return false;
-            });
-            menu.show();
+            CategoryOptionPopUp.getInstance()
+                    .setCategoryName(((TextInputEditText) selectedView).getHint().toString())
+                    .setCatOptions(data)
+                    .setDate(selectedPeriod)
+                    .setOnClick(item -> {
+                        if (item != null)
+                            selectedCatOptions.put(catOptionUid, item);
+                        else
+                            selectedCatOptions.remove(catOptionUid);
+                        ((TextInputEditText) selectedView).setText(item != null ? item.displayName() : null);
+                        checkActionVisivbility();
+                    })
+                    .show(this, selectedView);
         }
     }
 
@@ -190,6 +209,13 @@ public class DataSetInitialActivity extends ActivityGlobalAbstract implements Da
     @Override
     public String getPeriodType() {
         return binding.getDataSetModel().periodType().name();
+    }
+
+    @Override
+    public void setOrgUnit(OrganisationUnit organisationUnit) {
+        selectedOrgUnit = organisationUnit;
+        binding.dataSetOrgUnitEditText.setText(selectedOrgUnit.displayName());
+        binding.dataSetOrgUnitEditText.setEnabled(false);
     }
 
     private void checkActionVisivbility() {

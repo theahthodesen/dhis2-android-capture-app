@@ -6,7 +6,8 @@ import androidx.annotation.Nullable;
 
 import org.dhis2.data.forms.section.viewmodels.date.DatePickerDialogFragment;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
-import org.dhis2.utils.custom_views.RxDateDialog;
+import org.dhis2.utils.customviews.RxDateDialog;
+import org.dhis2.utils.filters.FilterManager;
 import org.hisp.dhis.android.core.dataset.DataInputPeriod;
 import org.hisp.dhis.android.core.event.Event;
 import org.hisp.dhis.android.core.event.EventStatus;
@@ -836,6 +837,7 @@ public class DateUtils {
                 calendar.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
                 break;
             case WeeklySunday:
+                calendar.setFirstDayOfWeek(Calendar.SUNDAY);
                 calendar.add(Calendar.WEEK_OF_YEAR, page);
                 calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
                 break;
@@ -854,7 +856,7 @@ public class DateUtils {
                 calendar.set(Calendar.DAY_OF_MONTH, 1);
                 break;
             case Quarterly:
-                extra = 3 - page * (calendar.get(Calendar.MONTH)) % 3;
+                extra = 4 - page * (calendar.get(Calendar.MONTH)+1) % 3;
                 calendar.add(Calendar.MONTH, page * extra);
                 calendar.set(Calendar.DAY_OF_MONTH, 1);
                 break;
@@ -1057,19 +1059,16 @@ public class DateUtils {
             periodType = PeriodType.Daily;
         switch (periodType) {
             case Weekly:
-                formattedDate = new SimpleDateFormat("w yyyy", locale).format(initDate);
-                break;
             case WeeklyWednesday:
-                formattedDate = new SimpleDateFormat("w yyyy", locale).format(initDate);
-                break;
             case WeeklyThursday:
-                formattedDate = new SimpleDateFormat("w yyyy", locale).format(initDate);
-                break;
             case WeeklySaturday:
-                formattedDate = new SimpleDateFormat("w yyyy", locale).format(initDate);
-                break;
             case WeeklySunday:
-                formattedDate = new SimpleDateFormat("w yyyy", locale).format(initDate);
+                Calendar endWeek = Calendar.getInstance();
+                endWeek.setTime(initDate);
+                endWeek.add(Calendar.DAY_OF_MONTH, 6);
+                String DATE_LABEL_FORMAT = "Week %s to %s";
+                formattedDate = String.format(DATE_LABEL_FORMAT, new SimpleDateFormat("w yyyy-MM-dd", locale).format(initDate),
+                        new SimpleDateFormat(" yyyy-MM-dd", locale).format(endWeek.getTime()));
                 break;
             case BiWeekly:
                 formattedDate = String.format(periodString,
@@ -1081,24 +1080,12 @@ public class DateUtils {
                 formattedDate = new SimpleDateFormat("MMM yyyy", locale).format(initDate);
                 break;
             case BiMonthly:
-                formattedDate = String.format(periodString,
-                        new SimpleDateFormat("MMM yyyy", locale).format(initDate),
-                        new SimpleDateFormat("MMM yyyy", locale).format(endDate)
-                );
-                break;
             case Quarterly:
-                formattedDate = String.format(periodString,
-                        new SimpleDateFormat("MMM yyyy", locale).format(initDate),
-                        new SimpleDateFormat("MMM yyyy", locale).format(endDate)
-                );
-                break;
             case SixMonthly:
-                formattedDate = String.format(periodString,
-                        new SimpleDateFormat("MMM yyyy", locale).format(initDate),
-                        new SimpleDateFormat("MMM yyyy", locale).format(endDate)
-                );
-                break;
             case SixMonthlyApril:
+            case FinancialApril:
+            case FinancialJuly:
+            case FinancialOct:
                 formattedDate = String.format(periodString,
                         new SimpleDateFormat("MMM yyyy", locale).format(initDate),
                         new SimpleDateFormat("MMM yyyy", locale).format(endDate)
@@ -1106,24 +1093,6 @@ public class DateUtils {
                 break;
             case Yearly:
                 formattedDate = new SimpleDateFormat("yyyy", locale).format(initDate);
-                break;
-            case FinancialApril:
-                formattedDate = String.format(periodString,
-                        new SimpleDateFormat("MMM yyyy", locale).format(initDate),
-                        new SimpleDateFormat("MMM yyyy", locale).format(endDate)
-                );
-                break;
-            case FinancialJuly:
-                formattedDate = String.format(periodString,
-                        new SimpleDateFormat("MMM yyyy", locale).format(initDate),
-                        new SimpleDateFormat("MMM yyyy", locale).format(endDate)
-                );
-                break;
-            case FinancialOct:
-                formattedDate = String.format(periodString,
-                        new SimpleDateFormat("MMM yyyy", locale).format(initDate),
-                        new SimpleDateFormat("MMM yyyy", locale).format(endDate)
-                );
                 break;
             case Daily:
             default:
@@ -1186,7 +1155,7 @@ public class DateUtils {
                 expDate = calendar.getTime();
             }
 
-            expiredBecouseOfPeriod = expDate != null && expDate.before(getCalendar().getTime());
+            expiredBecouseOfPeriod = expDate != null && expDate.compareTo(getCalendar().getTime())<=0;
 
             return expiredBecouseOfPeriod || expiredBecouseOfCompletion;
         } else
@@ -1246,6 +1215,8 @@ public class DateUtils {
 
     public void showFromToSelector(ActivityGlobalAbstract activity, OnFromToSelector fromToListener) {
         DatePickerDialogFragment fromCalendar = DatePickerDialogFragment.create(true);
+        if (!FilterManager.getInstance().getPeriodFilters().isEmpty())
+            fromCalendar.setInitialDate(FilterManager.getInstance().getPeriodFilters().get(0).startDate());
         fromCalendar.setFormattedOnDateSetListener(new DatePickerDialogFragment.FormattedOnDateSetListener() {
             @Override
             public void onDateSet(@NonNull Date fromDate) {
@@ -1280,6 +1251,8 @@ public class DateUtils {
     public void showPeriodDialog(ActivityGlobalAbstract activity, OnFromToSelector fromToListener, boolean fromOtherPeriod) {
         DatePickerDialogFragment fromCalendar = DatePickerDialogFragment.create(true, "Daily", fromOtherPeriod);
 //        fromCalendar.setOpeningClosingDates(null, null); TODO: MAX 1 year in the future?
+        if (!FilterManager.getInstance().getPeriodFilters().isEmpty())
+            fromCalendar.setInitialDate(FilterManager.getInstance().getPeriodFilters().get(0).startDate());
         fromCalendar.setFormattedOnDateSetListener(new DatePickerDialogFragment.FormattedOnDateSetListener() {
             @Override
             public void onDateSet(@NonNull Date date) {
@@ -1299,6 +1272,11 @@ public class DateUtils {
         });
         fromCalendar.show(activity.getSupportFragmentManager(), "DAILY");
 
+    }
+
+
+    public static long timeToDate(Date finaLDate) {
+        return finaLDate.getTime() - new Date().getTime();
     }
 
     public interface OnFromToSelector {

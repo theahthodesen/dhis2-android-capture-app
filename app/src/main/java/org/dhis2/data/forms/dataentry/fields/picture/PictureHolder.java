@@ -4,7 +4,7 @@ import org.dhis2.R;
 import org.dhis2.data.forms.dataentry.fields.FormViewHolder;
 import org.dhis2.data.forms.dataentry.fields.RowAction;
 import org.dhis2.databinding.CustomFormPictureBinding;
-import org.dhis2.utils.custom_views.PictureView;
+import org.dhis2.utils.customviews.PictureView;
 
 import io.reactivex.processors.FlowableProcessor;
 
@@ -26,7 +26,7 @@ public class PictureHolder extends FormViewHolder {
             if (value != null)
                 this.binding.formPictures.setTextSelected(binding.getRoot().getContext().getString(R.string.image_selected));
             processor.onNext(
-                    RowAction.create(uid, file.getPath(), getAdapterPosition()));
+                    RowAction.create(uid, file != null ? file.getPath() : null, getAdapterPosition()));
         });
     }
 

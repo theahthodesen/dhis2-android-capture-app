@@ -4,10 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.databinding.ObservableField;
 
 import org.dhis2.data.forms.FormSectionViewModel;
+import org.dhis2.data.forms.dataentry.DataEntryStore;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
 import org.dhis2.data.tuples.Pair;
 import org.dhis2.usescases.general.AbstractActivityContracts;
 import org.dhis2.utils.Result;
+import org.dhis2.utils.RulesActionCallbacks;
 import org.hisp.dhis.android.core.event.EventStatus;
 import org.hisp.dhis.android.core.organisationunit.OrganisationUnitLevel;
 import org.hisp.dhis.rules.models.RuleEffect;
@@ -64,6 +66,8 @@ public class EventCaptureContract {
         void setProgramStage(String programStageUid);
 
         void showRuleCalculation(Boolean shouldShow);
+
+        void showErrorSnackBar();
     }
 
     public interface Presenter extends AbstractActivityContracts.Presenter {
@@ -76,6 +80,8 @@ public class EventCaptureContract {
         void onBackClick();
 
         void subscribeToSection();
+
+        void nextCalculation(boolean doNextCalculation);
 
         void onNextSection();
 
@@ -108,6 +114,10 @@ public class EventCaptureContract {
         boolean hasExpired();
 
         Observable<List<OrganisationUnitLevel>> getLevels();
+
+        DataEntryStore getDataEntryStore();
+
+        void saveImage(String uuid, String filePath);
     }
 
     public interface EventCaptureRepository {
@@ -123,19 +133,10 @@ public class EventCaptureContract {
         Flowable<List<FormSectionViewModel>> eventSections();
 
         @NonNull
-        Flowable<List<FieldViewModel>> list(String sectionUid);
-
-        @NonNull
-        Flowable<List<FieldViewModel>> evaluateForSection(String sectionUid);
-
-        @NonNull
         Flowable<List<FieldViewModel>> list();
 
         @NonNull
         Flowable<Result<RuleEffect>> calculate();
-
-        @NonNull
-        Flowable<Result<RuleEffect>> fullCalculate();
 
         Observable<Boolean> completeEvent();
 
@@ -170,6 +171,9 @@ public class EventCaptureContract {
         Single<Boolean> canReOpenEvent();
 
         Observable<Boolean> isCompletedEventExpired(String eventUid);
+        void assign(String uid, String value);
+
+        void saveImage(String uuid, String filePath);
     }
 
 }

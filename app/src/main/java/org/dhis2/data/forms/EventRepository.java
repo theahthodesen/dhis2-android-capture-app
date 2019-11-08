@@ -6,7 +6,6 @@ import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
@@ -21,6 +20,7 @@ import org.hisp.dhis.android.core.common.FeatureType;
 import org.hisp.dhis.android.core.common.Geometry;
 import org.hisp.dhis.android.core.common.ObjectStyle;
 import org.hisp.dhis.android.core.common.State;
+import org.hisp.dhis.android.core.common.Unit;
 import org.hisp.dhis.android.core.common.ValueType;
 import org.hisp.dhis.android.core.common.ValueTypeDeviceRendering;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
@@ -48,6 +48,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 import static android.text.TextUtils.isEmpty;
@@ -159,6 +160,8 @@ public class EventRepository implements FormRepository {
     @NonNull
     private Flowable<RuleEngine> cachedRuleEngineFlowable;
 
+    private RuleEngine ruleEngine = null;
+
     @Nullable
     private final String eventUid;
     private final D2 d2;
@@ -173,34 +176,39 @@ public class EventRepository implements FormRepository {
                            @NonNull D2 d2) {
         this.d2 = d2;
         this.briteDatabase = briteDatabase;
-        this.eventUid = eventUid;
+        this.eventUid = eventUid != null ? eventUid : "";
         this.rulesRepository = rulesRepository;
         this.evaluator = evaluator;
+        String program = eventUid != null ? d2.eventModule().events().uid(eventUid).blockingGet().program() : "";
+
         // We don't want to rebuild RuleEngine on each request, since metadata of
         // the event is not changing throughout lifecycle of FormComponent.
-        this.cachedRuleEngineFlowable = eventProgram()
-                .switchMap(program -> Flowable.zip(
-                        rulesRepository.rulesNew(program),
-                        rulesRepository.ruleVariables(program),
-                        rulesRepository.otherEvents(eventUid),
-                        rulesRepository.enrollment(eventUid),
-                        rulesRepository.queryConstants(),
-                        rulesRepository.getSuplementaryData(d2),
-                        (rules, variables, events, enrollment, constants,supplementaryData) -> {
+        this.cachedRuleEngineFlowable = Single.zip(
+                rulesRepository.rulesNew(program).subscribeOn(Schedulers.io()),
+                rulesRepository.ruleVariables(program).subscribeOn(Schedulers.io()),
+                rulesRepository.otherEvents(this.eventUid).subscribeOn(Schedulers.io()),
+                rulesRepository.enrollment(this.eventUid).subscribeOn(Schedulers.io()),
+                rulesRepository.queryConstants().subscribeOn(Schedulers.io()),
+                rulesRepository.supplementaryData().subscribeOn(Schedulers.io()),
+                (rules, variables, events, enrollment, constants, supplementaryData) -> {
 
-                            RuleEngine.Builder builder = RuleEngineContext.builder(evaluator)
-                                    .rules(rules)
-                                    .ruleVariables(variables)
-                                    .constantsValue(constants)
-                                    .calculatedValueMap(new HashMap<>())
-                                    .supplementaryData(supplementaryData)
-                                    .build().toEngineBuilder();
-                            builder.triggerEnvironment(TriggerEnvironment.ANDROIDCLIENT);
-                            builder.events(events);
-                            if (!isEmpty(enrollment.enrollment()))
-                                builder.enrollment(enrollment);
-                            return builder.build();
-                        }))
+                    RuleEngine.Builder builder = RuleEngineContext.builder(evaluator)
+                            .rules(rules)
+                            .ruleVariables(variables)
+                            .constantsValue(constants)
+                            .calculatedValueMap(new HashMap<>())
+                            .supplementaryData(supplementaryData)
+                            .build().toEngineBuilder();
+                    builder.triggerEnvironment(TriggerEnvironment.ANDROIDCLIENT);
+                    builder.events(events);
+                    if (!isEmpty(enrollment.enrollment()))
+                        builder.enrollment(enrollment);
+                    return builder.build();
+                })
+                .doOnSuccess(ruleEngine -> {
+                    this.ruleEngine = ruleEngine;
+                    Timber.tag("ROGRAMRULEREPOSITORY").d("RULE ENGINE READY AT %s", Thread.currentThread().getName());
+                }).toFlowable()
                 .cacheWithInitialCapacity(1);
     }
 
@@ -208,14 +216,14 @@ public class EventRepository implements FormRepository {
     @Override
     public Flowable<RuleEngine> restartRuleEngine() {
         return this.cachedRuleEngineFlowable = eventProgram()
-                .switchMap(program -> Flowable.zip(
-                        rulesRepository.rulesNew(program),
-                        rulesRepository.ruleVariables(program),
-                        rulesRepository.otherEvents(eventUid),
-                        rulesRepository.enrollment(eventUid),
-                        rulesRepository.queryConstants(),
-                        rulesRepository.getSuplementaryData(d2),
-                        (rules, variables, events, enrollment, constants,supplementaryData) -> {
+                .switchMap(program -> Single.zip(
+                        rulesRepository.rulesNew(program).subscribeOn(Schedulers.io()),
+                        rulesRepository.ruleVariables(program).subscribeOn(Schedulers.io()),
+                        rulesRepository.otherEvents(eventUid).subscribeOn(Schedulers.io()),
+                        rulesRepository.enrollment(eventUid).subscribeOn(Schedulers.io()),
+                        rulesRepository.queryConstants().subscribeOn(Schedulers.io()),
+                        rulesRepository.supplementaryData().subscribeOn(Schedulers.io()),
+                        (rules, variables, events, enrollment, constants, supplementaryData) -> {
 
                             RuleEngine.Builder builder = RuleEngineContext.builder(evaluator)
                                     .rules(rules)
@@ -229,14 +237,14 @@ public class EventRepository implements FormRepository {
                             if (!isEmpty(enrollment.enrollment()))
                                 builder.enrollment(enrollment);
                             return builder.build();
-                        }))
+                        }).toFlowable())
                 .cacheWithInitialCapacity(1);
     }
 
     @NonNull
     @Override
     public Flowable<RuleEngine> ruleEngine() {
-        return cachedRuleEngineFlowable;
+        return ruleEngine != null ? Flowable.just(ruleEngine) : cachedRuleEngineFlowable;
     }
 
     @NonNull
@@ -343,6 +351,14 @@ public class EventRepository implements FormRepository {
         };
     }
 
+    @Override
+    public Consumer<Unit> clearCoordinates() {
+        return unit -> {
+            //coordinates are only for tracker events
+        };
+    }
+
+
     @NonNull
     @Override
     public Consumer<ReportStatus> storeReportStatus() {
@@ -403,8 +419,8 @@ public class EventRepository implements FormRepository {
     @NonNull
     @Override
     public Observable<String> getTrackedEntityInstanceUid() {
-        return Observable.defer(() -> d2.enrollmentModule().enrollments.uid(
-                d2.eventModule().events.uid(eventUid).blockingGet().enrollment()
+        return Observable.defer(() -> d2.enrollmentModule().enrollments().uid(
+                d2.eventModule().events().uid(eventUid).blockingGet().enrollment()
         ).get().toObservable())
                 .map(Enrollment::trackedEntityInstance);
     }
@@ -445,8 +461,8 @@ public class EventRepository implements FormRepository {
 
     @Override
     public Observable<FeatureType> captureCoodinates() {
-        return d2.eventModule().events.byUid().eq(eventUid).one().get().toObservable()
-                .map(event -> d2.programModule().programStages.byUid().eq(event.programStage()).one().blockingGet())
+        return d2.eventModule().events().byUid().eq(eventUid).one().get().toObservable()
+                .map(event -> d2.programModule().programStages().byUid().eq(event.programStage()).one().blockingGet())
                 .map(programStage -> {
                     if (programStage.featureType() == null)
                         return FeatureType.NONE;
@@ -457,8 +473,8 @@ public class EventRepository implements FormRepository {
 
     @Override
     public Observable<OrganisationUnit> getOrgUnitDates() {
-        return Observable.defer(() -> Observable.just(d2.eventModule().events.uid(eventUid).blockingGet()))
-                .switchMap(event -> Observable.just(d2.organisationUnitModule().organisationUnits.uid(event.organisationUnit()).blockingGet()));
+        return Observable.defer(() -> Observable.just(d2.eventModule().events().uid(eventUid).blockingGet()))
+                .switchMap(event -> Observable.just(d2.organisationUnitModule().organisationUnits().uid(event.organisationUnit()).blockingGet()));
     }
 
     @Override
@@ -523,13 +539,11 @@ public class EventRepository implements FormRepository {
                 "",
                 "",
                 "");
-        ObjectStyle objectStyle = ObjectStyle.builder().build();
-        try (Cursor objStyleCursor = briteDatabase.query("SELECT * FROM ObjectStyle WHERE uid = ?", uid)) {
-            if (objStyleCursor.moveToFirst())
-                objectStyle = ObjectStyle.create(objStyleCursor);
-        }
+        ObjectStyle objectStyle = d2.dataElementModule().dataElements().uid(uid).blockingGet().style();
+
+
         if (valueType == ValueType.ORGANISATION_UNIT && !isEmpty(dataValue)) {
-            dataValue = dataValue + "_ou_" + d2.organisationUnitModule().organisationUnits.uid(dataValue).blockingGet().displayName();
+            dataValue = dataValue + "_ou_" + d2.organisationUnitModule().organisationUnits().uid(dataValue).blockingGet().displayName();
         }
 
         return fieldFactory.create(uid, isEmpty(formLabel) ? label : formLabel, valueType,

@@ -20,7 +20,7 @@ import org.dhis2.R;
 import org.dhis2.utils.Constants;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.NetworkUtils;
-import org.hisp.dhis.android.core.d2manager.D2Manager;
+import org.hisp.dhis.android.core.D2Manager;
 
 import java.util.Calendar;
 
@@ -73,7 +73,7 @@ public class SyncMetadataWorker extends Worker {
             boolean noNetwork = false;
 
             try {
-                presenter.syncMetadata(getApplicationContext(), progress -> triggerNotification(
+                presenter.syncMetadata(progress -> triggerNotification(
                         getApplicationContext().getString(R.string.app_name),
                         getApplicationContext().getString(R.string.syncing_configuration),
                         progress));
@@ -94,7 +94,9 @@ public class SyncMetadataWorker extends Worker {
             cancelNotification();
 
             if (!isMetaOk)
-                return Result.retry();
+                return Result.failure(createOutputData(false));
+
+            presenter.startPeriodicMetaWork();
 
             return Result.success(createOutputData(true));
         } else {

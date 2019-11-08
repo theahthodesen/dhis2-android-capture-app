@@ -26,7 +26,12 @@
         android:layout_margin="5dp"
         android:padding="5dp"
         tools:background="?attr/colorPrimary">
-
+        <View
+            android:id="@+id/dummyFocusView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
         <ImageView
             android:id="@+id/renderImage"
             android:layout_width="wrap_content"
@@ -65,7 +70,7 @@
                 android:theme="@style/loginInputTextAccent"
                 tools:hint="this is the hint">
 
-                <org.dhis2.utils.custom_views.TextInputAutoCompleteTextView
+                <org.dhis2.utils.customviews.TextInputAutoCompleteTextView
                     android:id="@+id/input_editText"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

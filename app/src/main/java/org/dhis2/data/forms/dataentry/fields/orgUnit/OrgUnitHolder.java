@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import org.dhis2.data.forms.dataentry.fields.FormViewHolder;
 import org.dhis2.data.forms.dataentry.fields.RowAction;
 import org.dhis2.databinding.FormOrgUnitBinding;
+import org.hisp.dhis.android.core.common.ObjectStyle;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.processors.FlowableProcessor;
@@ -51,6 +52,9 @@ public class OrgUnitHolder extends FormViewHolder {
         }
 
         binding.orgUnitView.setObjectStyle(viewModel.objectStyle());
+        if (model.objectStyle() != null) {
+            objectStyle = model.objectStyle();
+        }
         binding.orgUnitView.setLabel(viewModel.label(), viewModel.mandatory());
         descriptionText = viewModel.description();
         binding.orgUnitView.setDescription(descriptionText);

@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.dhis2.R;
 import org.dhis2.utils.ColorUtils;
 import org.dhis2.utils.Constants;
-import org.dhis2.utils.custom_views.CustomDialog;
+import org.dhis2.utils.customviews.CustomDialog;
 import org.hisp.dhis.android.core.common.ObjectStyle;
 
 import java.util.Objects;
@@ -82,8 +82,9 @@ public abstract class FormViewHolder extends RecyclerView.ViewHolder {
 
     public void openKeyboard(View v) {
         InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Activity.INPUT_METHOD_SERVICE);
-        if (!imm.showSoftInput(v, 0))
-            v.postDelayed(() -> openKeyboard(v), 500);
+        boolean shown = imm.showSoftInput(v.findFocus(),InputMethodManager.SHOW_FORCED);
+       /* if (!imm.showSoftInput(v, 0))
+            v.postDelayed(() -> openKeyboard(v), 500);*/
     }
 
     public void clearBackground(boolean isSarchMode) {

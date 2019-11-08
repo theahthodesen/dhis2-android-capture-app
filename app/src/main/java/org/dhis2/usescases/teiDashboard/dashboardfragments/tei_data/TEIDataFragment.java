@@ -33,9 +33,10 @@ import org.dhis2.utils.Constants;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.DialogClickListener;
 import org.dhis2.utils.EventCreationType;
-import org.dhis2.utils.custom_views.CategoryComboDialog;
-import org.dhis2.utils.custom_views.CustomDialog;
+import org.dhis2.utils.customviews.CategoryComboDialog;
+import org.dhis2.utils.customviews.CustomDialog;
 import org.hisp.dhis.android.core.category.CategoryCombo;
+import org.hisp.dhis.android.core.category.CategoryOptionCombo;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.hisp.dhis.android.core.event.Event;
 import org.hisp.dhis.android.core.program.ProgramStage;
@@ -58,6 +59,8 @@ import static org.dhis2.utils.Constants.EVENT_SCHEDULE_INTERVAL;
 import static org.dhis2.utils.Constants.ORG_UNIT;
 import static org.dhis2.utils.Constants.PROGRAM_UID;
 import static org.dhis2.utils.Constants.TRACKED_ENTITY_INSTANCE;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CREATE_EVENT_TEI;
+import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_EVENT_TEI;
 
 /**
  * -Created by ppajuelo on 29/11/2017.
@@ -331,6 +334,7 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
     private void createEvent(EventCreationType eventCreationType, Integer scheduleIntervalDays) {
         if (isAdded()) {
+            analyticsHelper().setEvent(TYPE_EVENT_TEI, eventCreationType.name(), CREATE_EVENT_TEI);
             Bundle bundle = new Bundle();
             bundle.putString(PROGRAM_UID, dashboardModel.getCurrentEnrollment().program());
             bundle.putString(TRACKED_ENTITY_INSTANCE, dashboardModel.getTei().uid());
@@ -345,8 +349,8 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     }
 
     @Override
-    public void showCatComboDialog(String eventId, CategoryCombo categoryCombo) {
-        CategoryComboDialog dialog = new CategoryComboDialog(getAbstracContext(), categoryCombo, 123,
+    public void showCatComboDialog(String eventId, CategoryCombo categoryCombo, List<CategoryOptionCombo> categoryOptionCombos) {
+        CategoryComboDialog dialog = new CategoryComboDialog(getAbstracContext(), categoryCombo, categoryOptionCombos, 123,
                 selectedOption -> presenter.changeCatOption(eventId, selectedOption), categoryCombo.displayName());
         dialog.setCancelable(false);
         dialog.setCanceledOnTouchOutside(false);

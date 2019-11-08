@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import org.hisp.dhis.android.core.category.CategoryCombo;
 import org.hisp.dhis.android.core.category.CategoryOption;
+import org.hisp.dhis.android.core.category.CategoryOptionCombo;
 import org.hisp.dhis.android.core.common.Geometry;
 import org.hisp.dhis.android.core.common.ObjectStyle;
 import org.hisp.dhis.android.core.event.Event;
@@ -36,6 +37,9 @@ public interface EventInitialRepository {
     @NonNull
     Observable<List<OrganisationUnit>> orgUnits(String programId);
 
+    @NonNull
+    Observable<List<OrganisationUnit>> filteredOrgUnits(String date, String programId, String parentId);
+
     Observable<String> createEvent(String enrollmentUid, @Nullable String trackedEntityInstanceUid,
                                    @NonNull Context context, @NonNull String program,
                                    @NonNull String programStage, @NonNull Date date,
@@ -62,6 +66,8 @@ public interface EventInitialRepository {
     void deleteEvent(String eventId, String trackedEntityInstance);
 
     boolean isEnrollmentOpen();
+
+    Observable<List<CategoryOptionCombo>> catOptionCombos(String catOptionComboUid);
 
     Flowable<Map<String,CategoryOption>> getOptionsFromCatOptionCombo(String eventId);
 

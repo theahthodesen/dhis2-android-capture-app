@@ -29,7 +29,7 @@ public final class DataSetSectionAdapter extends FragmentStatePagerAdapter {
     private List<DataSetSectionFragment> fragments;
 
     DataSetSectionAdapter(FragmentManager fm, boolean accessDataWrite, String dataSetUid, Context context) {
-        super(fm);
+        super(fm,BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         fragments = new ArrayList<>();
         sections = new ArrayList<>();
         this.accessDataWrite = accessDataWrite;
@@ -62,8 +62,7 @@ public final class DataSetSectionAdapter extends FragmentStatePagerAdapter {
     public CharSequence getPageTitle(int position) {
         SpannableString sb = new SpannableString(sections.get(position) + "  ");
 
-        if (fragments.size() > position &&
-                (fragments.get(position).currentNumTables() != null && fragments.get(position).currentNumTables().size() > 1)) {
+        if (fragments.size() > position && (fragments.get(position).currentNumTables()  > 1)) {
             Drawable image = context.getResources().getDrawable(R.drawable.ic_arrow_down_white);
             image.setBounds(0, 0, image.getIntrinsicWidth(), image.getIntrinsicHeight());
             ImageSpan imageSpan = new ImageSpan(image, ImageSpan.ALIGN_BOTTOM);

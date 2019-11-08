@@ -27,6 +27,13 @@
         android:minHeight="70dp"
         android:padding="5dp">
 
+        <View
+            android:id="@+id/dummyFocusView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
+
         <ImageView
             android:id="@+id/renderImage"
             android:layout_width="wrap_content"
@@ -64,7 +71,7 @@
                 android:textColorHint="@color/text_black_808"
                 tools:hint="hint">
 
-                <org.dhis2.utils.custom_views.TextInputAutoCompleteTextView
+                <org.dhis2.utils.customviews.TextInputAutoCompleteTextView
                     android:id="@+id/input_editText"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

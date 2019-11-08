@@ -1,10 +1,15 @@
 <resources>
+    <!--growth standard test-->
+    <string name="height_for_age">Height for age</string>
+    <string name="weight_for_age">Weight for age</string>
+    <string name="weight_for_height">Weight for height</string>
     <!--GENERAL-->
     <string name="app_name">Dhis2</string>
     <string name="logo_text">dhis</string>
     <string name="logo_number">2</string>
     <string name="google_api" translatable="false">AIzaSyATNJAcNH6YB8ZzkJbzh1vWOgMAKi7KEnQ</string>
     <string name="tab" translatable="false">\u0009</string>
+    <string name="default_notification_channel_id" translatable="false">20180901</string>
     <!-- Warnings and error messages -->
     <string name="error">Error</string>
     <string name="error_wrong_server_url">Wrong server url</string>
@@ -432,6 +437,7 @@
     <string name="dashboard_indicators">Indicators</string>
     <string name="empty_indicators">There are no indicators for this program.</string>
     <string name="dashboard_notes">Notes</string>
+    <string name="dashboard_charts">Charts</string>
     <string name="unable_to_complete">Unable to complete</string>
     <string name="field_errors">Some fields have errors. Please, check them to be able to complete</string>
     <string name="unselect_enrollment">All enrollments</string>
@@ -506,6 +512,7 @@
     <string name="data_every_hour">Every hour</string>
     <string name="data_every_day">Daily</string>
     <string name="data_every_week">Weekly</string>
+    <string name="period_week">Week</string>
     <string name="sync_setting">Synchronization setting: %s</string>
     <string name="relationship_without_enrollment">The record you are trying to access has no enrollment. You can\'t access the dashboard.</string>
     <string name="formatting_error">Formatting error</string>
@@ -545,6 +552,7 @@
     <string name="sms_title_enrollment">SMS TEI registration and enrollment</string>
     <string name="sms_title_event">SMS event submission</string>
     <string name="sms_title_data_set">SMS data set submission</string>
+    <string name="sms_bar_state_starting">Starting</string>
     <string name="sms_bar_state_sending">In progress</string>
     <string name="sms_bar_state_sent">Sent</string>
     <string name="sms_bar_state_failed">Failed</string>
@@ -568,4 +576,29 @@
     <!--endregion-->
 
     <string name="wrong_pattern">It is not a correct format.</string>
+    <string name="fingerprint_title">Fingerprint</string>
+    <string name="fingerprint_message">Please, put your finger in your fingerprint reader.</string>
+    <string name="security_title">Security</string>
+    <string name="security_rooted_message">For security reasons, this version of the app is not allow to be used in rooted devices. Please use the training version.</string>
+    <string name="fix_error">There are some errors. Please fix them before continuing.</string>
+
+    <string name="filters_active">Filters applying</string>
+    <string name="filters_disabled">No filters applied</string>
+    <string name="filters_title_period">Period</string>
+    <string name="filters_title_org_unit">Org. Unit</string>
+    <string name="filters_title_status">Status</string>
+    <string name="filters_title_state">State</string>
+    <string name="filter_period_today">Today</string>
+    <string name="filter_period_yesterday">Yesterday</string>
+    <string name="filter_period_tomorrow">Tomorrow</string>
+    <string name="filter_period_this_week">This week</string>
+    <string name="filter_period_last_week">Last week</string>
+    <string name="filter_perdior_next_week">Next week</string>
+    <string name="filter_period_this_month">This month</string>
+    <string name="filter_period_last_month">Last month</string>
+    <string name="filter_period_next_month">Next month</string>
+    <string name="filter_period_form_to">From - To</string>
+    <string name="filter_period_other">Other</string>
+    <string name="filter_period_any">Anytime</string>
+    <string name="data_values_error_sync_message">Sync failed. Sync failed. Check the data values to try to fix the problem and try again. If it keeps failing contact your system administrator</string>
 </resources>
