@@ -21,11 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class DashboardPagerAdapter extends FragmentStatePagerAdapter {
 
-<<<<<<< HEAD
+
     private static final int MOVILE_DASHBOARD_SIZE = 5;
-=======
-    private static final int MOBILE_DASHBOARD_SIZE = 4;
->>>>>>> 9d6dc0e97d8b0f8f38b3caa9f7366420ea95ec78
+
     private String currentProgram;
     private Context context;
 
