@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import com.mapbox.geojson.BoundingBox;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
-import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.geometry.LatLngBounds;
@@ -45,14 +44,13 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonOptions;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import org.dhis2.App;
-import org.dhis2.BuildConfig;
 import org.dhis2.R;
 import org.dhis2.data.tuples.Pair;
 import org.dhis2.databinding.ActivityProgramEventDetailBinding;
 import org.dhis2.databinding.InfoWindowEventBinding;
 import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity;
 import org.dhis2.usescases.general.ActivityGlobalAbstract;
-import org.dhis2.usescases.org_unit_selector.OUTreeActivity;
+import org.dhis2.usescases.orgunitselector.OUTreeActivity;
 import org.dhis2.utils.ColorUtils;
 import org.dhis2.utils.DateUtils;
 import org.dhis2.utils.HelpManager;
@@ -66,8 +64,6 @@ import org.hisp.dhis.android.core.program.Program;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -105,11 +101,11 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     private MarkerView currentMarker;
     private FeatureType featureType;
 
-    public static Bundle getBundle(String programUid, String period, List<Date> dates) {
+    public static final String EXTRA_PROGRAM_UID = "PROGRAM_UID";
+
+    public static Bundle getBundle(String programUid) {
         Bundle bundle = new Bundle();
-        bundle.putString("PROGRAM_UID", programUid);
-        bundle.putString("CURRENT_PERIOD", period);
-        bundle.putSerializable("DATES", (ArrayList) dates);
+        bundle.putString(EXTRA_PROGRAM_UID, programUid);
         return bundle;
     }
 
@@ -121,13 +117,14 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        ((App) getApplicationContext()).userComponent().plus(new ProgramEventDetailModule(getIntent().getStringExtra("PROGRAM_UID"))).inject(this);
+        this.programUid = getIntent().getStringExtra(EXTRA_PROGRAM_UID);
+
+        ((App) getApplicationContext()).userComponent().plus(new ProgramEventDetailModule(programUid)).inject(this);
         super.onCreate(savedInstanceState);
 
         FilterManager.getInstance().clearCatOptCombo();
         FilterManager.getInstance().clearEventStatus();
 
-        this.programUid = getIntent().getStringExtra("PROGRAM_UID");
         binding = DataBindingUtil.setContentView(this, activity_program_event_detail);
 
         binding.setPresenter(presenter);
@@ -471,6 +468,11 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
         popupMenu.getMenu().getItem(0).setVisible(!emptyVisible && !mapVisible && featureType != FeatureType.NONE);
         popupMenu.getMenu().getItem(1).setVisible(!emptyVisible && binding.recycler.getVisibility() == View.GONE && featureType != FeatureType.NONE);
         popupMenu.show();
+    }
+
+    @Override
+    public boolean isMapVisible() {
+        return binding.mapView.getVisibility() == View.VISIBLE;
     }
 
     private void showMap(boolean showMap) {

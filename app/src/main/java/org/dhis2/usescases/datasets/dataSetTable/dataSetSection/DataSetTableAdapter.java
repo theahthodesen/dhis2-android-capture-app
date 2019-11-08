@@ -85,7 +85,7 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     private Boolean showColumnTotal = false;
     private final FlowableProcessor<Trio<String, String, Integer>> processorOptionSet;
 
-    private int currentWidth = 200;
+    private int currentWidth = 300;
     private int currentHeight;
 
     private String catCombo;
@@ -183,9 +183,7 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     @Override
     public void onBindCellViewHolder(AbstractViewHolder holder, Object cellItemModel, int columnPosition, int rowPosition) {
 
-        String value = cellItemModel != null && !cellItemModel.equals("") ? cellItemModel.toString() : viewModels.get(rowPosition).get(columnPosition).value();
-
-        rows.get(holder.getItemViewType()).onBind(holder, viewModels.get(rowPosition).get(columnPosition), value);
+        rows.get(holder.getItemViewType()).onBind(holder, viewModels.get(rowPosition).get(columnPosition).withValue(cellItemModel.toString()), cellItemModel.toString());
         holder.itemView.getLayoutParams().width = currentWidth;
         holder.itemView.getLayoutParams().height = currentHeight;
     }
@@ -348,17 +346,20 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
                 oldValue = Integer.parseInt(getCellItem(rowAction.columnPos(), rowAction.rowPos()));
 
             if (showRowTotal) {
-                int totalRow = Integer.parseInt(getCellItem(viewModels.get(0).size() - 1, rowAction.rowPos()))
+                int totalRow = Integer.parseInt(getCellItem(viewModels.get(0).size() - 1, rowAction.rowPos()).isEmpty() ?
+                        "0" : getCellItem(viewModels.get(0).size() - 1, rowAction.rowPos()))
                         + (Integer.parseInt(rowAction.value() != null ? rowAction.value() : "0") - oldValue);
                 changeCellItem(viewModels.get(0).size() - 1, rowAction.rowPos(), totalRow + "", showRowTotal);
             }
             if (showColumnTotal) {
-                int totalColumn = Integer.parseInt(getCellItem(rowAction.columnPos(), viewModels.size() - 1))
+                int totalColumn = Integer.parseInt(getCellItem(rowAction.columnPos(), viewModels.size() - 1).isEmpty() ?
+                        "0" : getCellItem(rowAction.columnPos(), viewModels.size() - 1))
                         + (Integer.parseInt(rowAction.value() != null ? rowAction.value() : "0") - oldValue);
                 changeCellItem(rowAction.columnPos(), viewModels.size() - 1, totalColumn + "", showColumnTotal);
             }
             if (showRowTotal && showColumnTotal) {
-                int total = Integer.parseInt(getCellItem(viewModels.get(0).size() - 1, viewModels.size() - 1))
+                int total = Integer.parseInt(getCellItem(viewModels.get(0).size() - 1, viewModels.size() - 1).isEmpty() ?
+                        "0" : getCellItem(viewModels.get(0).size() - 1, viewModels.size() - 1))
                         + (Integer.parseInt(rowAction.value() != null ? rowAction.value() : "0") - oldValue);
                 changeCellItem(viewModels.get(0).size() - 1, viewModels.size() - 1, total + "", true);
             }

@@ -1,11 +1,8 @@
 package org.dhis2.usescases.login
 
-
-import android.view.View
 import androidx.annotation.UiThread
 import co.infinum.goldfinger.Goldfinger
 import org.dhis2.usescases.general.AbstractActivityContracts
-import retrofit2.Response
 
 class LoginContracts {
 
@@ -43,50 +40,22 @@ class LoginContracts {
 
         fun hideFingerprintDialog()
 
+        fun navigateToQRActivity()
+
         @UiThread
         fun renderError(throwable: Throwable)
 
-        //FingerPrintAuth
+        // FingerPrintAuth
 
         fun showBiometricButton()
 
-        fun checkSecuredCredentials(result: Goldfinger.Result)
-
         fun openAccountRecovery()
 
-        fun displayAlertDialog(titleResource:Int, descriptionResource:Int,negativeResource:Int?,positiveResource:Int)
+        fun displayAlertDialog()
         fun alreadyAuthenticated()
+        fun showCredentialsData(type: Goldfinger.Type, vararg args: String)
+        fun showEmptyCredentialsMessage()
+        fun setTestingCredentials()
+        fun setUpFingerPrintDialog()
     }
-
-    interface Presenter {
-        fun init(view: View)
-
-        fun logIn(serverUrl: String, userName: String, pass: String)
-
-        fun onQRClick(v: android.view.View)
-
-        fun unlockSession(pin: String)
-
-        fun stopReadingFingerprint()
-
-        fun logOut()
-
-        fun onButtonClick()
-
-        fun onDestroy()
-
-        fun handleResponse(userResponse: Response<*>)
-
-        fun handleError(throwable: Throwable)
-
-        fun onAccountRecovery()
-
-        //FingerPrintAuth
-
-        fun onFingerprintClick()
-
-        fun canHandleBiometrics(): Boolean?
-        fun onUrlInfoClick(v: android.view.View)
-    }
-
 }

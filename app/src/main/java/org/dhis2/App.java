@@ -1,7 +1,6 @@
 package org.dhis2;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
 import android.os.Looper;
 
@@ -13,6 +12,8 @@ import androidx.multidex.MultiDexApplication;
 
 import com.crashlytics.android.Crashlytics;
 import com.facebook.stetho.Stetho;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.security.ProviderInstaller;
 import com.mapbox.mapboxsdk.Mapbox;
 
@@ -20,8 +21,7 @@ import org.dhis2.data.dagger.PerActivity;
 import org.dhis2.data.dagger.PerServer;
 import org.dhis2.data.dagger.PerUser;
 import org.dhis2.data.database.DbModule;
-import org.dhis2.data.forms.FormComponent;
-import org.dhis2.data.forms.FormModule;
+import org.dhis2.data.prefs.PreferenceModule;
 import org.dhis2.data.schedulers.SchedulerModule;
 import org.dhis2.data.schedulers.SchedulersProviderImpl;
 import org.dhis2.data.server.ServerComponent;
@@ -30,6 +30,7 @@ import org.dhis2.data.server.UserManager;
 import org.dhis2.data.user.UserComponent;
 import org.dhis2.data.user.UserModule;
 import org.dhis2.usescases.login.LoginComponent;
+import org.dhis2.usescases.login.LoginContracts;
 import org.dhis2.usescases.login.LoginModule;
 import org.dhis2.usescases.teiDashboard.TeiDashboardComponent;
 import org.dhis2.usescases.teiDashboard.TeiDashboardModule;
@@ -37,14 +38,13 @@ import org.dhis2.utils.UtilsModule;
 import org.dhis2.utils.analytics.AnalyticsModule;
 import org.dhis2.utils.timber.DebugTree;
 import org.dhis2.utils.timber.ReleaseTree;
-import org.hisp.dhis.android.core.d2manager.D2Manager;
+import org.hisp.dhis.android.core.D2Manager;
 
 import javax.inject.Singleton;
 
 import io.fabric.sdk.android.Fabric;
 import io.ona.kujaku.KujakuLibrary;
 import io.reactivex.Scheduler;
-import io.reactivex.Single;
 import io.reactivex.android.plugins.RxAndroidPlugins;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import timber.log.Timber;
@@ -74,10 +74,6 @@ public class App extends MultiDexApplication implements Components {
 
     @Nullable
     @PerActivity
-    FormComponent formComponent;
-
-    @Nullable
-    @PerActivity
     LoginComponent loginComponent;
 
     @Nullable
@@ -99,35 +95,27 @@ public class App extends MultiDexApplication implements Components {
 
         Fabric.with(this, new Crashlytics());
 
-        setUpAppComponent();
-        setUpServerComponent();
+
 //        setUpUserComponent();
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-            upgradeSecurityProvider();
+            upgradeSecurityProviderSync();
 
+        setUpAppComponent();
+        setUpServerComponent();
 
         Scheduler asyncMainThreadScheduler = AndroidSchedulers.from(Looper.getMainLooper(), true);
         RxAndroidPlugins.setInitMainThreadSchedulerHandler(schedulerCallable -> asyncMainThreadScheduler);
     }
 
-    private void upgradeSecurityProvider() {
+    private void upgradeSecurityProviderSync(){
         try {
-            ProviderInstaller.installIfNeededAsync(this, new ProviderInstaller.ProviderInstallListener() {
-                @Override
-                public void onProviderInstalled() {
-                    Timber.e("New security provider installed.");
-                }
-
-                @Override
-                public void onProviderInstallFailed(int errorCode, Intent recoveryIntent) {
-                    Timber.e("New security provider install failed.");
-                }
-            });
-        } catch (Exception ex) {
-            Timber.e(ex, "Unknown issue trying to install a new security provider");
+            ProviderInstaller.installIfNeeded(this);
+            Timber.e("New security provider installed.");
+        } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
+            e.printStackTrace();
+            Timber.e("New security provider install failed.");
         }
-
     }
 
     @Override
@@ -137,25 +125,14 @@ public class App extends MultiDexApplication implements Components {
     }
 
     private void setUpAppComponent() {
-
         appComponent = prepareAppComponent().build();
         appComponent.inject(this);
-
     }
 
     protected void setUpServerComponent() {
-        boolean isLogged = D2Manager.setUp(ServerModule.getD2Configuration(this))
-                .andThen(
-                        Single.defer(() -> {
-                            if (D2Manager.isServerUrlSet())
-                                return D2Manager.instantiateD2().flatMap(d2 -> d2.userModule().isLogged());
-                            else
-                                return Single.just(false);
+        boolean isLogged = D2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this)).userModule().isLogged().blockingGet();
 
-                        })
-                ).blockingGet();
-        if (D2Manager.isServerUrlSet())
-            serverComponent = appComponent.plus(new ServerModule(), new DbModule(DATABASE_NAME));
+        serverComponent = appComponent.plus(new ServerModule(), new DbModule(DATABASE_NAME));
 
         if (isLogged)
             setUpUserComponent();
@@ -180,12 +157,8 @@ public class App extends MultiDexApplication implements Components {
                 .appModule(new AppModule(this))
                 .schedulerModule(new SchedulerModule(new SchedulersProviderImpl()))
                 .analyticsModule(new AnalyticsModule())
+                .preferenceModule(new PreferenceModule())
                 .utilModule(new UtilsModule());
-    }
-
-    @NonNull
-    protected AppComponent createAppComponent() {
-        return (appComponent = prepareAppComponent().build());
     }
 
     @NonNull
@@ -200,8 +173,8 @@ public class App extends MultiDexApplication implements Components {
 
     @NonNull
     @Override
-    public LoginComponent createLoginComponent() {
-        return (loginComponent = appComponent.plus(new LoginModule()));
+    public LoginComponent createLoginComponent(LoginContracts.View view) {
+        return (loginComponent = appComponent.plus(new LoginModule(view)));
     }
 
     @Nullable
@@ -221,7 +194,8 @@ public class App extends MultiDexApplication implements Components {
 
     @Override
     public ServerComponent createServerComponent() {
-        serverComponent = appComponent.plus(new ServerModule(), new DbModule(DATABASE_NAME));
+        if (serverComponent == null)
+            serverComponent = appComponent.plus(new ServerModule(), new DbModule(DATABASE_NAME));
         return serverComponent;
 
     }
@@ -259,23 +233,7 @@ public class App extends MultiDexApplication implements Components {
     public void releaseUserComponent() {
         userComponent = null;
     }
-    ////////////////////////////////////////////////////////////////////////
-    // Form component
-    ////////////////////////////////////////////////////////////////////////
 
-    @NonNull
-    public FormComponent createFormComponent(@NonNull FormModule formModule) {
-        return (formComponent = userComponent.plus(formModule));
-    }
-
-    @Nullable
-    public FormComponent formComponent() {
-        return formComponent;
-    }
-
-    public void releaseFormComponent() {
-        formComponent = null;
-    }
 
     ////////////////////////////////////////////////////////////////////////
     // Dashboard component
@@ -298,12 +256,5 @@ public class App extends MultiDexApplication implements Components {
     // AndroidInjector
     ////////////////////////////////////////////////////////////////////////
 
-
-    /**
-     * Visible only for testing purposes.
-     */
-    public void setTestComponent(AppComponent testingComponent) {
-        appComponent = testingComponent;
-    }
 
 }

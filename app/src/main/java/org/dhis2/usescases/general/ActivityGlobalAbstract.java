@@ -23,27 +23,25 @@ import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.dhis2.App;
 import org.dhis2.BuildConfig;
 import org.dhis2.R;
+import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity;
 import org.dhis2.usescases.login.LoginActivity;
 import org.dhis2.usescases.main.MainActivity;
-import org.dhis2.usescases.main.program.SyncStatusDialog;
 import org.dhis2.usescases.map.MapSelectorActivity;
 import org.dhis2.usescases.splash.SplashActivity;
-import org.dhis2.utils.ColorUtils;
 import org.dhis2.utils.Constants;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OnDialogClickListener;
 import org.dhis2.utils.analytics.AnalyticsHelper;
-import org.dhis2.utils.custom_views.CoordinatesView;
-import org.dhis2.utils.custom_views.CustomDialog;
-import org.dhis2.utils.custom_views.PictureView;
+import org.dhis2.utils.customviews.CoordinatesView;
+import org.dhis2.utils.customviews.CustomDialog;
+import org.dhis2.utils.customviews.PictureView;
+import org.dhis2.utils.granularsync.SyncStatusDialog;
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper;
 import org.hisp.dhis.android.core.common.FeatureType;
 import org.hisp.dhis.android.core.common.Geometry;
@@ -55,7 +53,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import io.reactivex.processors.FlowableProcessor;
 import rx.Observable;
 import rx.subjects.BehaviorSubject;
 import timber.log.Timber;
@@ -67,11 +64,12 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
  * QUADRAM. Created by Javi on 28/07/2017.
  */
 
-public abstract class ActivityGlobalAbstract extends AppCompatActivity implements AbstractActivityContracts.View, CoordinatesView.OnMapPositionClick, PictureView.OnIntentSelected {
+public abstract class ActivityGlobalAbstract extends AppCompatActivity
+        implements AbstractActivityContracts.View, CoordinatesView.OnMapPositionClick,
+        PictureView.OnIntentSelected {
 
     private BehaviorSubject<Status> lifeCycleObservable = BehaviorSubject.create();
     private CoordinatesView coordinatesView;
-    private PictureView.OnPictureSelected onPictureSelected;
     public String uuid;
     @Inject
     public AnalyticsHelper analyticsHelper;
@@ -92,8 +90,8 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity implement
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         FirebaseAnalytics mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
-        if(((App)getApplicationContext()).serverComponent()!=null)
-            analyticsHelper().setD2(((App)getApplicationContext()).serverComponent().userManager().getD2());
+        /*if (((App) getApplicationContext()).serverComponent() != null && analyticsHelper() != null)
+            analyticsHelper().setD2(((App) getApplicationContext()).serverComponent().userManager().getD2());*/
 
         if (!getResources().getBoolean(R.bool.is_tablet))
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
@@ -217,24 +215,6 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity implement
     }
 
     @Override
-    public <T> void saveListToPreference(String key, List<T> list) {
-        Gson gson = new Gson();
-        String json = gson.toJson(list);
-
-        getSharedPreferences(Constants.SHARE_PREFS, MODE_PRIVATE).edit().putString(key, json).apply();
-    }
-
-    @Override
-    public <T> List<T> getListFromPreference(String key) {
-        Gson gson = new Gson();
-        String json = getSharedPreferences().getString(key, "[]");
-        Type type = new TypeToken<List<T>>() {
-        }.getType();
-
-        return gson.fromJson(json, type);
-    }
-
-    @Override
     public SharedPreferences getSharedPreferences() {
         return getSharedPreferences(Constants.SHARE_PREFS, MODE_PRIVATE);
     }
@@ -346,51 +326,35 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity implement
     @Override
     public void onMapPositionClick(CoordinatesView coordinatesView) {
         this.coordinatesView = coordinatesView;
-        startActivityForResult(MapSelectorActivity.Companion.create(this,coordinatesView.getFeatureType(), coordinatesView.currentCoordinates()), Constants.RQ_MAP_LOCATION_VIEW);
+        startActivityForResult(MapSelectorActivity.Companion.create(this,
+                coordinatesView.getFeatureType(),
+                coordinatesView.currentCoordinates()),
+                Constants.RQ_MAP_LOCATION_VIEW);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case Constants.RQ_MAP_LOCATION_VIEW:
-                    if (coordinatesView != null && data.getExtras() != null) {
-                        FeatureType locationType = FeatureType.valueOf(data.getStringExtra(MapSelectorActivity.Companion.getLOCATION_TYPE_EXTRA()));
-                        String dataExtra = data.getStringExtra(MapSelectorActivity.Companion.getDATA_EXTRA());
-                        Geometry geometry;
-                        if (locationType == FeatureType.POINT) {
-                            Type type = new TypeToken<List<Double>>(){}.getType();
-                            geometry = GeometryHelper.createPointGeometry(new Gson().fromJson(dataExtra, type));
-                        } else if (locationType == FeatureType.POLYGON) {
-                            Type type = new TypeToken<List<List<List<Double>>>>(){}.getType();
-                            geometry = GeometryHelper.createPolygonGeometry(new Gson().fromJson(dataExtra, type));
-                        } else  {
-                            Type type = new TypeToken<List<List<List<List<Double>>>>>(){}.getType();
-                            geometry = GeometryHelper.createMultiPolygonGeometry(new Gson().fromJson(dataExtra, type));
-                        }
-                        coordinatesView.updateLocation(geometry);
-                    }
-                    this.coordinatesView = null;
-                    break;
-                /*case Constants.GALLERY_REQUEST:
-                    try {
-                        final Uri imageUri = data.getData();
-                        onPictureSelected.onSelected(FileResourcesUtil.getFileFromGallery(this, imageUri), imageUri.toString(), uuid);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show();
-                    }
-                    break;
-                case Constants.CAMERA_REQUEST:
-                    if (data != null && data.hasExtra("data")) {
-                        Bitmap bitmap = (Bitmap) data.getExtras().get("data");
-                        if (bitmap != null)
-                            onPictureSelected.onSelected(null, new File(FileResourcesUtil.getUploadDirectory(this), "test").getAbsolutePath(), uuid);
-                    } else
-                        onPictureSelected.onSelected(null, null, uuid);
-                    break;*/
+        if (resultCode == RESULT_OK && requestCode == Constants.RQ_MAP_LOCATION_VIEW) {
+            if (coordinatesView != null && data.getExtras() != null) {
+                FeatureType locationType = FeatureType.valueOf(data.getStringExtra(MapSelectorActivity.Companion.getLOCATION_TYPE_EXTRA()));
+                String dataExtra = data.getStringExtra(MapSelectorActivity.Companion.getDATA_EXTRA());
+                Geometry geometry;
+                if (locationType == FeatureType.POINT) {
+                    Type type = new TypeToken<List<Double>>() {
+                    }.getType();
+                    geometry = GeometryHelper.createPointGeometry(new Gson().fromJson(dataExtra, type));
+                } else if (locationType == FeatureType.POLYGON) {
+                    Type type = new TypeToken<List<List<List<Double>>>>() {
+                    }.getType();
+                    geometry = GeometryHelper.createPolygonGeometry(new Gson().fromJson(dataExtra, type));
+                } else {
+                    Type type = new TypeToken<List<List<List<List<Double>>>>>() {
+                    }.getType();
+                    geometry = GeometryHelper.createMultiPolygonGeometry(new Gson().fromJson(dataExtra, type));
+                }
+                coordinatesView.updateLocation(geometry);
             }
+            this.coordinatesView = null;
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -408,32 +372,18 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity implement
         ).show();
     }
 
-    protected int getPrimaryColor() {
-        return ColorUtils.getPrimaryColor(this, ColorUtils.ColorType.PRIMARY);
-    }
-
-    protected int getAccentColor() {
-        return ColorUtils.getPrimaryColor(this, ColorUtils.ColorType.ACCENT);
-    }
-
     @Override
-    public void showSyncDialog(String programUid, SyncStatusDialog.ConflictType conflictType, FlowableProcessor processor) {
-        new SyncStatusDialog(programUid, conflictType, processor)
-                .show(getSupportFragmentManager(), programUid);
-    }
-
-    @Override
-    public void showSyncDialog(String orgUnit, String attributeCombo, String periodId,
-                               SyncStatusDialog.ConflictType conflictType, FlowableProcessor processor) {
-        new SyncStatusDialog(orgUnit,attributeCombo, periodId, conflictType, processor)
-                .show(getSupportFragmentManager(), attributeCombo);
+    public void showSyncDialog(SyncStatusDialog dialog) {
+        dialog.show(getSupportFragmentManager(), dialog.getDialogTag());
     }
 
     @Override
     public void intentSelected(String uuid, Intent intent, int request, PictureView.OnPictureSelected onPictureSelected) {
         this.uuid = uuid;
-        this.onPictureSelected = onPictureSelected;
-        startActivityForResult(intent, request);
+        if (this instanceof EventCaptureActivity)
+            ((EventCaptureActivity)getContext()).startActivityForResult(intent, request);
+        else
+            startActivityForResult(intent, request);
     }
 
     @Override

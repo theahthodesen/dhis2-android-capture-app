@@ -41,7 +41,7 @@
                 android:background="@drawable/edittext_material_border"
                 app:drawableStartCompat="@drawable/ic_search"
                 android:drawablePadding="8dp"
-                android:hint="Search"
+                android:hint="@string/search"
                 android:maxLines="1"
                 android:singleLine="true"
                 android:padding="8dp"

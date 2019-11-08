@@ -1,5 +1,9 @@
 @file:JvmName("AnalyticsConstants")
+
 package org.dhis2.utils.analytics
+
+const val USER_PROPERTY_SERVER = "serverUrl"
+const val USER_PROPERTY_NAME = "userName"
 
 const val SYNC_MANAGER_FRAGMENT: String = "SyncManagerFragment"
 const val LOGIN = "login"
@@ -57,3 +61,6 @@ const val COMPLETE_REOPEN = "complete_reopen"
 const val ZOOM_TABLE = "zoom_table"
 const val LEVEL_ZOOM = "level_zoom"
 const val INFO_DATASET_TABLE = "info_dataSet_table"
+const val API_CALL = "api_call"
+const val API_CALL_RESPONSE_CODE = "api_call_response_code"
+const val API_CALL_ENDPOINT = "api_call_endpoint"

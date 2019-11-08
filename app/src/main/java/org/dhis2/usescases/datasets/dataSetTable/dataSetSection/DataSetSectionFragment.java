@@ -62,7 +62,7 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
     private String dataSetUid;
 
     @Inject
-    DataValueContract.Presenter presenterFragment;
+    DataValuePresenter presenterFragment;
 
     private ArrayList<Integer> heights = new ArrayList<>();
     private MutableLiveData<Integer> currentTablePosition = new MutableLiveData<>();
@@ -86,7 +86,7 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
         super.onAttach(context);
         activity = (DataSetTableActivity) context;
         dataSetUid = getArguments().getString(Constants.DATA_SET_UID, dataSetUid);
-        ((App) context.getApplicationContext()).userComponent().plus(new DataValueModule(dataSetUid)).inject(this);
+        ((App) context.getApplicationContext()).userComponent().plus(new DataValueModule(dataSetUid, this)).inject(this);
     }
 
     @Nullable
@@ -135,8 +135,7 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
 
         tableView.setAdapter(adapter);
         tableView.setHeaderCount(columnHeaders.size());
-        tableView.setHeadersColor(ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY_LIGHT));
-        tableView.setShadowColor(ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY_DARK));
+        tableView.setShadowColor(ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY));
 
         adapter.swap(fields);
 
@@ -246,6 +245,12 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
 
     public FlowableProcessor<Trio<String, String, Integer>> optionSetActions() {
         return adapters.get(0).asFlowableOptionSet();
+    }
+
+    public void updateData(RowAction rowAction, String catCombo) {
+        for (DataSetTableAdapter adapter : adapters)
+            if (adapter.getCatCombo().equals(catCombo))
+                adapter.updateValue(rowAction);
     }
 
     @Override

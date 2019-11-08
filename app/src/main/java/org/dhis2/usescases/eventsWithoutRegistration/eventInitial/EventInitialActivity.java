@@ -48,15 +48,16 @@ import org.dhis2.utils.DialogClickListener;
 import org.dhis2.utils.EventCreationType;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.analytics.AnalyticsConstants;
-import org.dhis2.utils.custom_views.CategoryOptionPopUp;
-import org.dhis2.utils.custom_views.CoordinatesView;
-import org.dhis2.utils.custom_views.CustomDialog;
-import org.dhis2.utils.custom_views.OrgUnitDialog;
-import org.dhis2.utils.custom_views.PeriodDialog;
+import org.dhis2.utils.customviews.CategoryOptionPopUp;
+import org.dhis2.utils.customviews.CoordinatesView;
+import org.dhis2.utils.customviews.CustomDialog;
+import org.dhis2.utils.customviews.OrgUnitDialog;
+import org.dhis2.utils.customviews.PeriodDialog;
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper;
 import org.hisp.dhis.android.core.category.Category;
 import org.hisp.dhis.android.core.category.CategoryCombo;
 import org.hisp.dhis.android.core.category.CategoryOption;
+import org.hisp.dhis.android.core.category.CategoryOptionCombo;
 import org.hisp.dhis.android.core.common.FeatureType;
 import org.hisp.dhis.android.core.common.Geometry;
 import org.hisp.dhis.android.core.common.ObjectStyle;
@@ -111,7 +112,6 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 public class EventInitialActivity extends ActivityGlobalAbstract implements EventInitialContract.View, DatePickerDialog.OnDateSetListener {
 
-    private static final int PROGRESS_TIME = 2000;
     @Inject
     EventInitialContract.Presenter presenter;
 
@@ -174,10 +174,6 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
-        setScreenName(this.getLocalClassName());
-        ((App) getApplicationContext()).userComponent().plus(new EventInitialModule(eventUid)).inject(this);
-        super.onCreate(savedInstanceState);
-
         programUid = getIntent().getStringExtra(PROGRAM_UID);
         eventUid = getIntent().getStringExtra(Constants.EVENT_UID);
         eventCreationType = getIntent().getStringExtra(EVENT_CREATION_TYPE) != null ?
@@ -190,6 +186,10 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
         programStageUid = getIntent().getStringExtra(Constants.PROGRAM_STAGE_UID);
         enrollmentStatus = (EnrollmentStatus) getIntent().getSerializableExtra(Constants.ENROLLMENT_STATUS);
         eventScheduleInterval = getIntent().getIntExtra(Constants.EVENT_SCHEDULE_INTERVAL, 0);
+        setScreenName(this.getLocalClassName());
+        ((App) getApplicationContext()).userComponent().plus(new EventInitialModule(eventUid)).inject(this);
+        super.onCreate(savedInstanceState);
+
         disposable = new CompositeDisposable();
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_event_initial);
@@ -407,7 +407,10 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
             }
 
             binding.date.setText(selectedDateString);
-            presenter.initOrgunit(selectedDate);
+            if(selectedOrgUnit == null)
+                presenter.initOrgunit(selectedDate);
+            else
+                binding.orgUnit.setEnabled(false);
 
         } else {
             if (!isEmpty(eventModel.enrollment()) && eventCreationType != EventCreationType.ADDNEW) {
@@ -436,7 +439,6 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
                             binding.date.clearFocus();
                             if (!fixedOrgUnit) {
                                 presenter.initOrgunit(selectedDate);
-//                                binding.orgUnit.setText("");
                             }
                         })
                         .show(getSupportFragmentManager(), PeriodDialog.class.getSimpleName());
@@ -548,7 +550,7 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
     }
 
     @Override
-    public void setCatComboOptions(CategoryCombo catCombo, Map<String, CategoryOption> stringCategoryOptionMap) {
+    public void setCatComboOptions(CategoryCombo catCombo, List<CategoryOptionCombo> categoryOptionCombos, Map<String, CategoryOption> stringCategoryOptionMap) {
 
         runOnUiThread(() -> {
             this.catCombo = catCombo;
@@ -573,7 +575,7 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
                                                     selectedCatOption.remove(category.uid());
                                                 catSelectorBinding.catCombo.setText(item != null ? item.displayName() : null);
                                                 if (selectedCatOption.size() == catCombo.categories().size()) {
-                                                    catOptionComboUid = presenter.getCatOptionCombo(catCombo.categoryOptionCombos(), new ArrayList<>(selectedCatOption.values()));
+                                                    catOptionComboUid = presenter.getCatOptionCombo(categoryOptionCombos, new ArrayList<>(selectedCatOption.values()));
                                                     checkActionButtonVisibility();
                                                 }
                                             })
@@ -586,7 +588,7 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
                     binding.catComboLayout.addView(catSelectorBinding.getRoot());
                 }
             else if (catCombo.isDefault())
-                catOptionComboUid = catCombo.categoryOptionCombos().get(0).uid();
+                catOptionComboUid = categoryOptionCombos.get(0).uid();
 
         });
     }
@@ -700,7 +702,6 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
         binding.date.clearFocus();
         if (!fixedOrgUnit) {
             presenter.initOrgunit(selectedDate);
-//            binding.orgUnit.setText("");
         }
     }
 
@@ -835,6 +836,7 @@ public class EventInitialActivity extends ActivityGlobalAbstract implements Even
         if (organisationUnit != null) {
             this.selectedOrgUnit = organisationUnit.uid();
             binding.orgUnit.setText(organisationUnit.displayName());
+            binding.orgUnit.setEnabled(false);
         } else
             binding.orgUnit.setText("");
     }

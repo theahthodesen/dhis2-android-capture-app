@@ -1,24 +1,21 @@
 package org.dhis2.data.forms.dataentry.tablefields.spinner;
 
-import android.view.View;
+import androidx.fragment.app.FragmentActivity;
 
 import org.dhis2.data.forms.dataentry.tablefields.FormViewHolder;
 import org.dhis2.data.forms.dataentry.tablefields.RowAction;
 import org.dhis2.data.tuples.Trio;
 import org.dhis2.databinding.FormOptionSetBinding;
-import org.dhis2.utils.custom_views.OptionSetCellDialog;
-import org.dhis2.utils.custom_views.OptionSetCellPopUp;
-import org.dhis2.utils.custom_views.OptionSetDialog;
+import org.dhis2.utils.customviews.OptionSetCellPopUp;
+import org.dhis2.utils.optionset.OptionSetDialog;
 
-
-import androidx.fragment.app.FragmentActivity;
 import io.reactivex.processors.FlowableProcessor;
 
 /**
  * QUADRAM. Created by ppajuelo on 07/11/2017.
  */
 
-public class SpinnerHolder extends FormViewHolder implements View.OnClickListener {
+public class SpinnerHolder extends FormViewHolder {
 
     FormOptionSetBinding binding;
     private final FlowableProcessor<RowAction> processor;
@@ -35,7 +32,7 @@ public class SpinnerHolder extends FormViewHolder implements View.OnClickListene
         binding.optionSetView.setOnSelectedOptionListener((optionName, optionCode) -> {
 
             processor.onNext(
-                    RowAction.create(viewModel.uid(), optionCode , viewModel.dataElement(),
+                    RowAction.create(viewModel.uid(), optionCode, viewModel.dataElement(),
                             viewModel.categoryOptionCombo(), viewModel.catCombo(), viewModel.row(), viewModel.column())
             );
         });
@@ -45,23 +42,30 @@ public class SpinnerHolder extends FormViewHolder implements View.OnClickListene
         this.viewModel = viewModel;
         binding.optionSetView.updateEditable(viewModel.editable() && accessDataWrite);
         binding.optionSetView.setValue(viewModel.value());
-        binding.optionSetView.setOnClickListener(this);
     }
 
     public void dispose() {
     }
 
     @Override
-    public void onClick(View v) {
-        closeKeyboard(v);
-        if (binding.optionSetView.openOptionDialog()) {
-            OptionSetCellDialog dialog = new OptionSetCellDialog(viewModel,
-                    binding.optionSetView,
-                    (view) -> binding.optionSetView.deleteSelectedOption()
-            );
-            dialog.show(((FragmentActivity) binding.getRoot().getContext()).getSupportFragmentManager(), OptionSetDialog.TAG);
-        } else
-            new OptionSetCellPopUp(itemView.getContext(), v, viewModel,
-                    binding.optionSetView);
+    public void setSelected(SelectionState selectionState) {
+        super.setSelected(selectionState);
+        if (selectionState == SelectionState.SELECTED) {
+            closeKeyboard(binding.optionSetView);
+
+            OptionSetDialog dialog = new OptionSetDialog();
+            dialog.create(itemView.getContext());
+            dialog.setOptionSetTable(viewModel);
+
+            if (dialog.showDialog()) {
+                dialog.setListener(binding.optionSetView);
+                dialog.setClearListener((view) -> binding.optionSetView.deleteSelectedOption());
+                dialog.show(((FragmentActivity) binding.getRoot().getContext()).getSupportFragmentManager(), OptionSetDialog.Companion.getTAG());
+            } else {
+                dialog.dismiss();
+                new OptionSetCellPopUp(itemView.getContext(), binding.optionSetView, viewModel,
+                        binding.optionSetView);
+            }
+        }
     }
 }
