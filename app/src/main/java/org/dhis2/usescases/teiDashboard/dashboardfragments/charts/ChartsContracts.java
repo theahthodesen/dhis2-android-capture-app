@@ -1,7 +1,6 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
 import org.dhis2.usescases.general.AbstractActivityContracts;
-import org.hisp.dhis.android.core.enrollment.chart.ChartModel;
 
 import java.util.List;
 import java.util.function.Consumer;

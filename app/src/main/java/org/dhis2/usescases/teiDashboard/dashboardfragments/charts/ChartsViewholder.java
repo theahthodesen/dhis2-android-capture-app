@@ -18,7 +18,6 @@ import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.dhis2.databinding.ItemChartsBinding;
 import org.dhis2.utils.DateUtils;
-import org.hisp.dhis.android.core.enrollment.chart.ChartModel;
 
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.RecyclerView;
