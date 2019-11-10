@@ -30,8 +30,9 @@ import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
 import org.dhis2.usescases.sync.SyncContracts;
+import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
-
+import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,6 +44,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -52,6 +55,7 @@ import timber.log.Timber;
 
 public class ChartsFragment extends FragmentGlobalAbstract implements ChartsContracts.View {
 
+    @Inject
     ChartsContracts.Presenter presenter;
     private ChartsAdapter adapter;
     private FragmentChartsBinding binding;
@@ -88,14 +92,14 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding.weightforheight.setOnClickListener(this::set_weight_for_height);
 
         List<LineData> charts = new ArrayList<LineData>();
-        charts.add( new LineData(readSDValues("hfa_girls_z.txt")));
-        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
-        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
+        charts.add( new LineData(readSDValues("hfa_girls_z.txt", 1)));
+        charts.add( new LineData(readSDValues("wfa_girls_z.txt", 2)));
+        charts.add( new LineData(readSDValues("wfh_girls_z.txt", 3)));
         adapter.setItems(charts);
         return binding.getRoot();
     }
 
-    public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
+    public ArrayList<ILineDataSet> readSDValues(String nameOfFile, int chartType) {
 
         BufferedReader reader;
         ArrayList<ArrayList<Entry>> datasets;
@@ -107,49 +111,61 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
             String line = reader.readLine();
             String[] labels = line.split("\t");
-            datasets = new ArrayList<>(labels.length-1);
-            for(int i = 0; i < labels.length-1; i++){
+            datasets = new ArrayList<>(labels.length - 1);
+            for (int i = 0; i < labels.length - 1; i++) {
                 datasets.add(new ArrayList<Entry>());
             }
             line = reader.readLine();
-            while (line != null){
+            while (line != null) {
                 String[] values = line.split("\t");
                 int c = 1;
-                for(ArrayList<Entry> e : datasets){
+                for (ArrayList<Entry> e : datasets) {
                     e.add(new Entry(Float.parseFloat(values[0]), Float.parseFloat(values[c])));
-                    c+=1;
+                    c += 1;
 
                 }
                 line = reader.readLine();
             }
             int count = 1;
-            ArrayList<LineDataSet> lineDataSetList =  new ArrayList<LineDataSet>();
+            ArrayList<LineDataSet> lineDataSetList = new ArrayList<LineDataSet>();
             for (int i = 0; i < datasets.size(); i++) {
-                lineDataSetList.add(new LineDataSet(datasets.get(i),Integer.toString(i)));
+                lineDataSetList.add(new LineDataSet(datasets.get(i), Integer.toString(i)));
             }
 
-                for (int i = 0; i < lineDataSetList.size()-1; i++) {
+            for (int i = 0; i < lineDataSetList.size() - 1; i++) {
                 setColor(lineDataSetList.get(i));
-                    lineDataSetList.get(i).setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                lineDataSetList.get(i).setMode(LineDataSet.Mode.CUBIC_BEZIER);
                 lineDataSetList.get(i).setDrawCircles(false);
-                    lineDataSetList.get(i).setLineWidth(0.2f);
-                    lineDataSetList.get(i).setDrawCircleHole(false);
-                    lineDataSetList.get(i).setFillAlpha(170);
+                lineDataSetList.get(i).setLineWidth(0.2f);
+                lineDataSetList.get(i).setDrawCircleHole(false);
+                lineDataSetList.get(i).setFillAlpha(170);
                 lineDataSetList.get(i).setDrawFilled(true);
-                lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i+1)));
+                lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i + 1)));
                 sets.add(lineDataSetList.get(i));
 
-                count +=1;
+                count += 1;
 
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
+        LineDataSet child = new LineDataSet(import_child_values(chartType), "Child");
+        child.setFormLineWidth(0.7f);
+        child.setColor(Color.BLACK);
+        child.setCircleColor(Color.BLACK);
+        child.setCircleHoleColor(Color.BLACK);
+        sets.add(child);
         return sets;
 
     }
+
+    public List<Entry> import_child_values(int chartType){
+
+        List<Entry> entries = presenter.importChild(chartType);
+        return entries;
+
+    }
+
     public void resetTypefaceChart(){
         binding.heightforage.setTypeface(null, Typeface.NORMAL);
         binding.weightforheight.setTypeface(null, Typeface.NORMAL);

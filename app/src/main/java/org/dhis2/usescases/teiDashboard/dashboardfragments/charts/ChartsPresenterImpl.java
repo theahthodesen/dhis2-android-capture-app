@@ -1,11 +1,26 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
 
+import com.github.mikephil.charting.data.Entry;
+
+
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.hisp.dhis.android.core.D2;
+import org.hisp.dhis.android.core.dataelement.DataElement;
+import org.hisp.dhis.android.core.enrollment.Enrollment;
 
+import org.hisp.dhis.android.core.event.Event;
+import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue;
+
+
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
+
+
 
 public class ChartsPresenterImpl implements ChartsContracts.Presenter{
 
@@ -35,9 +50,84 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
         this.view = view;
         this.compositeDisposable = new CompositeDisposable();
 
+    }
+
+    public List<Entry> importChild(int chartType){
+
+        List<Entry> entries = new ArrayList<>();
+        List<Event> events = d2.eventModule().events().byEnrollmentUid().eq(d2.enrollmentModule().enrollments().byProgram().eq(programUid)
+                .byTrackedEntityInstance().eq(teiUid).one().blockingGet().uid()).byProgramStageUid().eq("Hj9JdKUS4Hj").blockingGet();
+
+        DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
+        DataElement weightDataElement = d2.dataElementModule().dataElements().byUid().eq("GZZLGtLZwep").one().blockingGet();
+
+        switch (chartType) {
+            case 1:
+                for(Event e : events) {
+
+                    TrackedEntityDataValue height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).one().blockingGet();
+                    String h = height.value();
+
+                    Date d = height.created();
+
+                    Enrollment birthdate = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid).one().blockingGet();
+                    Date bd = birthdate.enrollmentDate();
+
+
+                    long diff = d.getTime() - bd.getTime();
+                    long seconds = diff / 1000;
+                    long minutes = seconds / 60;
+                    long hours = minutes / 60;
+                    long days = (hours / 24) + 1;
+
+                    entries.add(new Entry(days, Integer.parseInt(h)));
+                }
+                break;
+
+            case 2:
+                for(Event e : events){
+
+                    TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
+                    String w = weight.value();
+
+                    Date d = weight.created();
+
+                    Enrollment birthdate = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid).one().blockingGet();
+                    Date bd = birthdate.enrollmentDate();
+
+
+                    long diff = d.getTime() - bd.getTime();
+                    long seconds = diff / 1000;
+                    long minutes = seconds / 60;
+                    long hours = minutes / 60;
+                    long days = (hours / 24) + 1;
+
+                    entries.add(new Entry(days, Integer.parseInt(w)));
+
+                }
+
+                break;
+
+            case 3:
+
+                for(Event e : events){
+
+                    TrackedEntityDataValue height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).one().blockingGet();
+                    String h = height.value();
+
+                    TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
+                    String w = weight.value();
+
+                    entries.add(new Entry(Integer.parseInt(h), Integer.parseInt(w)));
+
+                }
+                break;
+        }
+        return entries;
 
 
     }
+
 
 
     @Override

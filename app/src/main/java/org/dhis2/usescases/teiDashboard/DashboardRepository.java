@@ -2,6 +2,8 @@ package org.dhis2.usescases.teiDashboard;
 
 import android.content.Context;
 
+import com.github.mikephil.charting.data.Entry;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -52,6 +54,7 @@ public interface DashboardRepository {
     Flowable<List<Note>> getNotes(String programUid, String teUid);
 
     Consumer<Pair<String, Boolean>> handleNote();
+
 
     void setDashboardDetails(String teiUid, String programUid);
 

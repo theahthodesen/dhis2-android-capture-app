@@ -1,5 +1,9 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+
+
+import com.github.mikephil.charting.data.Entry;
+
 import org.dhis2.usescases.general.AbstractActivityContracts;
 
 import java.util.List;
@@ -9,7 +13,6 @@ public class ChartsContracts {
 
     public interface View extends AbstractActivityContracts.View {
 
-        //Consumer<List<ChartModel>> swapCharts();
 
 
     }
@@ -19,7 +22,7 @@ public class ChartsContracts {
 
         void init(ChartsContracts.View view);
         boolean hasProgramWritePermission();
-
+        List<Entry> importChild(int chartType);
 
     }
 
