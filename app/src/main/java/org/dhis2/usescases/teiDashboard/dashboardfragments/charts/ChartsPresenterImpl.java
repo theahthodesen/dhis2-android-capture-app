@@ -73,7 +73,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
         }
         LineDataSet linedataset = new LineDataSet(values, "tester");
         linedataset.setColor(Color.BLACK);
-        return new LineDataSet(values, "tester");
+        return linedataset;
     }
 
     @Override

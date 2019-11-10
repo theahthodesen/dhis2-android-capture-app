@@ -52,6 +52,7 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
     }
 
     public void setchartType(String type) {
+
         chartType = type;
         notifyDataSetChanged();
 

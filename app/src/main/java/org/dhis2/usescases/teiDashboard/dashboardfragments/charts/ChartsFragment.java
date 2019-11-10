@@ -67,13 +67,6 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         super.onResume();
         presenter.init(this);
 
-        List<LineData> charts = new ArrayList<LineData>();
-        ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
-        dataSets.add(addUserData());
-        charts.add( new LineData(dataSets));
-        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
-        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
-        adapter.setItems(charts);
     }
 
     public void onAttach(Context context){
@@ -104,7 +97,13 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding.heightforage.setOnClickListener(this::set_height_for_age);
         binding.weightforage.setOnClickListener(this::set_weight_for_age);
         binding.weightforheight.setOnClickListener(this::set_weight_for_height);
-
+        List<LineData> charts = new ArrayList<LineData>();
+        ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
+        dataSets.add(addUserData());
+        charts.add( new LineData(dataSets));
+        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
+        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
+        adapter.setItems(charts);
 
         return binding.getRoot();
     }
