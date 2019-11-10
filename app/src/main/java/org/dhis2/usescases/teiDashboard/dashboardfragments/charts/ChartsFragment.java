@@ -78,7 +78,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         dataSetsWFA.add(import_child_values(2));
         charts.add( new LineData(dataSetsWFA));
 
-        ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfa_girls_z.txt");
+        ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfh_girls_z.txt");
         dataSetsWFH.add(import_child_values(3));
         charts.add( new LineData(dataSetsWFH));
         adapter.setItems(charts);
