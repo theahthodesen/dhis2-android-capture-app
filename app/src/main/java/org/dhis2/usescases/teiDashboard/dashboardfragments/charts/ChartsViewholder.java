@@ -1,23 +1,30 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.drawable.Drawable;
-
+import android.widget.TextView;
+import org.dhis2.R;
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.IMarker;
+import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IFillFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.renderer.LineChartRenderer;
+import com.github.mikephil.charting.utils.MPPointF;
 import com.github.mikephil.charting.utils.Transformer;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import org.dhis2.databinding.ItemChartsBinding;
 import org.dhis2.utils.DateUtils;
+import org.hisp.dhis.android.core.event.Event;
 
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,18 +39,54 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
     ChartsViewholder(ItemChartsBinding binding){
         super(binding.getRoot());
         this.binding = binding;
+
     }
 
     public void bind(LineData model){
         binding.chart.setData(model);
         binding.chart.getXAxis().setDrawGridLinesBehindData(true);
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
+        MarkerView marker = new CustomMarkerView( binding.getRoot().getContext(),R.layout.tvcontent);
+        marker.setChartView(binding.chart);
+        binding.chart.setMarker(marker);
+        binding.chart.setTouchEnabled(true);
+        binding.chart.setDragEnabled(false);
+        binding.chart.setScaleEnabled(false);
+
+
 
         binding.executePendingBindings();
         itemView.setOnClickListener(view->{
 
         });
         binding.chart.invalidate();
+    }
+
+    public class CustomMarkerView extends MarkerView {
+
+        private TextView tvContent;
+        public CustomMarkerView (Context context, int layoutResource) {
+            super(context, layoutResource);
+            // this markerview only displays a textview
+            tvContent = (TextView) findViewById(R.id.tvContent);
+        }
+
+        // callbacks everytime the MarkerView is redrawn, can be used to update the
+        // content (user-interface)
+        @Override
+        public void refreshContent(Entry e, Highlight highlight) {
+
+            tvContent.setText("" + e.getY()); // set the entry-value as the display text
+            super.refreshContent(e, highlight);
+
+        }
+        private MPPointF mOffset;
+
+        @Override
+        public MPPointF getOffset() {
+            return new MPPointF(-(getWidth() / 2), -getHeight());
+        }
+
     }
     public class MyFillFormatter implements IFillFormatter {
         private ILineDataSet boundaryDataSet;
