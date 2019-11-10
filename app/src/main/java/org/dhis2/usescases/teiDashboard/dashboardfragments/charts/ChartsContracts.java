@@ -1,5 +1,7 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+import com.github.mikephil.charting.data.LineDataSet;
+
 import org.dhis2.usescases.general.AbstractActivityContracts;
 
 import java.util.List;
@@ -18,6 +20,7 @@ public class ChartsContracts {
     public interface Presenter extends AbstractActivityContracts.Presenter {
 
         void init(ChartsContracts.View view);
+        LineDataSet setUserData();
         boolean hasProgramWritePermission();
 
 

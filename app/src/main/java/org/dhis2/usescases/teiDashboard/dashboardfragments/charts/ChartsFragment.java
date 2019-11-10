@@ -25,6 +25,7 @@ import com.github.mikephil.charting.renderer.LineChartRenderer;
 import com.github.mikephil.charting.utils.Transformer;
 import com.github.mikephil.charting.utils.ViewPortHandler;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.dhis2.App;
 import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
@@ -46,17 +47,34 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
+
+import javax.inject.Inject;
+
 import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
 
 public class ChartsFragment extends FragmentGlobalAbstract implements ChartsContracts.View {
 
+    @Inject
     ChartsContracts.Presenter presenter;
+
     private ChartsAdapter adapter;
     private FragmentChartsBinding binding;
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        presenter.init(this);
 
+        List<LineData> charts = new ArrayList<LineData>();
+        ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
+        dataSets.add(addUserData());
+        charts.add( new LineData(dataSets));
+        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
+        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
+        adapter.setItems(charts);
+    }
 
     public void onAttach(Context context){
         super.onAttach(context);
@@ -87,11 +105,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding.weightforage.setOnClickListener(this::set_weight_for_age);
         binding.weightforheight.setOnClickListener(this::set_weight_for_height);
 
-        List<LineData> charts = new ArrayList<LineData>();
-        charts.add( new LineData(readSDValues("hfa_girls_z.txt")));
-        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
-        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
-        adapter.setItems(charts);
+
         return binding.getRoot();
     }
 
@@ -129,14 +143,16 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             }
 
                 for (int i = 0; i < lineDataSetList.size()-1; i++) {
-                setColor(lineDataSetList.get(i));
+                    setColor(lineDataSetList.get(i));
                     lineDataSetList.get(i).setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                lineDataSetList.get(i).setDrawCircles(false);
+                    lineDataSetList.get(i).setDrawCircles(false);
                     lineDataSetList.get(i).setLineWidth(0.2f);
                     lineDataSetList.get(i).setDrawCircleHole(false);
                     lineDataSetList.get(i).setFillAlpha(170);
-                lineDataSetList.get(i).setDrawFilled(true);
-                lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i+1)));
+                    lineDataSetList.get(i).setDrawFilled(true);
+                    lineDataSetList.get(i).setHighlightEnabled(false);
+                    lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i+1)));
+
                 sets.add(lineDataSetList.get(i));
 
                 count +=1;
@@ -149,6 +165,9 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
         return sets;
 
+    }
+    public LineDataSet addUserData(){
+        return presenter.setUserData();
     }
     public void resetTypefaceChart(){
         binding.heightforage.setTypeface(null, Typeface.NORMAL);

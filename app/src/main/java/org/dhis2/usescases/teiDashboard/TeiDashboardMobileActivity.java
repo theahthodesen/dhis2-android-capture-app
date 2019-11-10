@@ -340,6 +340,10 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         return programUid;
     }
 
+    public String getEnrollmentUid() {
+        return programModel.getCurrentEnrollment().uid();
+    }
+
     public void toRelationships() {
         fromRelationship = true;
     }
