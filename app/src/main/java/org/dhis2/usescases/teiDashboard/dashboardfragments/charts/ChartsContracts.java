@@ -1,6 +1,8 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.Entry;
 
 import org.dhis2.usescases.general.AbstractActivityContracts;
 
@@ -22,7 +24,7 @@ public class ChartsContracts {
         void init(ChartsContracts.View view);
         LineDataSet setUserData();
         boolean hasProgramWritePermission();
-
+        List<Entry> importChild(int chartType);
 
     }
 

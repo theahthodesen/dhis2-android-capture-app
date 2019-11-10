@@ -31,8 +31,9 @@ import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
 import org.dhis2.usescases.sync.SyncContracts;
+import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
-
+import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,11 +45,12 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 
-import javax.inject.Inject;
 
 import io.reactivex.functions.Consumer;
 import timber.log.Timber;
@@ -101,10 +103,15 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
         dataSets.add(addUserData());
         charts.add( new LineData(dataSets));
-        charts.add( new LineData(readSDValues("wfa_girls_z.txt")));
-        charts.add( new LineData(readSDValues("wfh_girls_z.txt")));
-        adapter.setItems(charts);
 
+        ArrayList<ILineDataSet> dataSetsWFA = readSDValues("wfa_girls_z.txt");
+        dataSetsWFA.add(import_child_values(2));
+        charts.add( new LineData(dataSetsWFA));
+
+        ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfh_girls_z.txt");
+        dataSetsWFH.add(import_child_values(3));
+        charts.add( new LineData(dataSetsWFH));
+        adapter.setItems(charts);
         return binding.getRoot();
     }
 
@@ -168,6 +175,19 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     public LineDataSet addUserData(){
         return presenter.setUserData();
     }
+
+    public LineDataSet import_child_values(int chartType){
+
+        List<Entry> entries = presenter.importChild(chartType);
+        LineDataSet child = new LineDataSet(entries, "Child");
+        child.setFormLineWidth(0.7f);
+        child.setColor(Color.BLACK);
+        child.setCircleColor(Color.BLACK);
+        child.setCircleHoleColor(Color.BLACK);
+        return child;
+
+    }
+
     public void resetTypefaceChart(){
         binding.heightforage.setTypeface(null, Typeface.NORMAL);
         binding.weightforheight.setTypeface(null, Typeface.NORMAL);

@@ -26,6 +26,7 @@ import org.hisp.dhis.android.core.category.CategoryCombo;
 import org.hisp.dhis.android.core.category.CategoryOptionCombo;
 import org.hisp.dhis.android.core.common.State;
 import org.hisp.dhis.android.core.common.ValueType;
+import org.hisp.dhis.android.core.dataelement.DataElement;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 import org.hisp.dhis.android.core.enrollment.EnrollmentCollectionRepository;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
@@ -47,6 +48,8 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstanceTableInfo;
 
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import android.content.ContentValues;
@@ -141,6 +144,7 @@ public class DashboardRepositoryImpl
         this.codeGenerator = codeGenerator;
         this.d2 = d2;
     }
+
 
     @Override
     public void setDashboardDetails( String teiUid, String programUid )
@@ -433,6 +437,29 @@ public class DashboardRepositoryImpl
             }
         };
     }
+
+
+    public List<Entry> getGrowthWFH() {
+
+        List<Entry> entries = new ArrayList<>();
+        List<Event> events = d2.eventModule().events().byEnrollmentUid().eq("r7uXwDcSpkR").byProgramStageUid().eq("Hj9JdKUS4Hj").blockingGet();
+        Timber.tag("GetGrowthWFH").i("Lengde: " + events.size());
+        for (Event e : events) {
+
+
+            DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
+            String height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).blockingGet().toString();
+            Timber.i("Hoyde: " + height);
+
+            DataElement weightDataElement = d2.dataElementModule().dataElements().byUid().eq("GZZLGtLZwep").one().blockingGet();
+            String weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).blockingGet().toString();
+            Timber.i("Vekt: " + weight);
+            entries.add(new Entry(Integer.parseInt(height), Integer.parseInt(weight)));
+        }
+        return entries;
+
+    }
+
 
     @Override
     public Flowable<Long> updateEnrollmentStatus( @NonNull String uid, @NonNull EnrollmentStatus value )
