@@ -20,7 +20,8 @@ public class ChartsContracts {
 
 
     public interface Presenter extends AbstractActivityContracts.Presenter {
-
+        String getProgramUid();
+        String createEvent();
         void init(ChartsContracts.View view);
         LineDataSet setUserData();
         boolean hasProgramWritePermission();
