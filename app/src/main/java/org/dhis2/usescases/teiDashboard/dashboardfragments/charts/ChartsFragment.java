@@ -29,11 +29,13 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.dhis2.App;
 import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
+import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureFragment.EventCaptureFormFragment;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
 import org.dhis2.usescases.sync.SyncContracts;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
 import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
+import org.dhis2.usescases.teiDashboard.dashboardfragments.notes.NotesFragment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -50,6 +52,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.FragmentTransaction;
 
 
 import io.reactivex.functions.Consumer;
@@ -90,12 +93,19 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         }
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
+        childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
         adapter = new ChartsAdapter();
         binding.chartsRecycler.setAdapter(adapter);
+        binding.addNoteButton.setOnClickListener(this::test);
         binding.heightforage.setOnClickListener(this::set_height_for_age);
         binding.weightforage.setOnClickListener(this::set_weight_for_age);
         binding.weightforheight.setOnClickListener(this::set_weight_for_height);
@@ -105,16 +115,19 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         charts.add( new LineData(dataSets));
 
         ArrayList<ILineDataSet> dataSetsWFA = readSDValues("wfa_girls_z.txt");
-        dataSetsWFA.add(import_child_values(2));
+     //   dataSetsWFA.add(import_child_values(2));
         charts.add( new LineData(dataSetsWFA));
 
         ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfh_girls_z.txt");
-        dataSetsWFH.add(import_child_values(3));
+   //     dataSetsWFH.add(import_child_values(3));
         charts.add( new LineData(dataSetsWFH));
         adapter.setItems(charts);
         return binding.getRoot();
     }
 
+    public void test(View i) {
+     presenter.test();
+    }
     public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
 
         BufferedReader reader;

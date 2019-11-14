@@ -5,6 +5,7 @@ import org.dhis2.data.tuples.Pair;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
+import org.hisp.dhis.android.core.event.EventCreateProjection;
 import org.hisp.dhis.android.core.maintenance.D2Error;
 import org.hisp.dhis.android.core.note.NoteCreateProjection;
 
@@ -92,7 +93,7 @@ public class NotesPresenterImpl implements NotesContracts.Presenter {
 
     @Override
     public void saveNote(String message){
-        try {
+        try { 
             d2.noteModule().notes().blockingAdd(
                     NoteCreateProjection.builder()
                             .enrollment(d2.enrollmentModule().enrollments().byProgram().eq(programUid)

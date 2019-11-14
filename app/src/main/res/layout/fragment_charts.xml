@@ -56,13 +56,24 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/charts_recycler"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="440dp"
             android:layout_marginTop="0dp"
             android:background="@android:color/white"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/chartButtonLayout"
             tools:listitem="@layout/item_charts" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/charts_recycler">
+            <FrameLayout
+                android:id="@+id/child_fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            </FrameLayout>
+        </LinearLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/addNoteButton"

@@ -11,10 +11,14 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
+import org.dhis2.utils.DateUtils;
 import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 
 import org.hisp.dhis.android.core.event.Event;
+import org.hisp.dhis.android.core.event.EventCreateProjection;
+import org.hisp.dhis.android.core.event.EventObjectRepository;
+import org.hisp.dhis.android.core.maintenance.D2Error;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue;
 import org.hisp.dhis.android.core.dataelement.DataElement;
 import org.hisp.dhis.android.core.enrollment.EnrollmentCollectionRepository;
@@ -25,6 +29,7 @@ import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute;
 
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -56,14 +61,44 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
         this.programUid = programUid;
         this.teiUid = teiUid;
     }
-    public LineDataSet setUserData() {
+public void test(){  Calendar cal = Calendar.getInstance();
+
+    try {
+        cal.setTime(DateUtils.getInstance().getCalendar().getTime());
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+
         EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid);
         enrollmentRepository = enrollmentRepository.byProgram().eq(programUid);
         String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
 
-        List<Event> events = d2.eventModule().events().byEnrollmentUid().eq(enrollmentUid).byProgramUid().eq(programUid).blockingGet();
+        String eventUid = d2.eventModule().events().blockingAdd(
+                EventCreateProjection.create(enrollmentUid, programUid, "Hj9JdKUS4Hj", "DiszpKrYNg8", null));
+        EventObjectRepository eventRepository = d2.eventModule().events().uid(eventUid);
+        eventRepository.setEventDate(cal.getTime());
+
+        DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
+
+        d2.trackedEntityModule().trackedEntityDataValues().value(eventUid, heightDataElement.uid()).blockingSet("80");
+
+    } catch (D2Error d2Error) {
+        d2Error.printStackTrace();
+    }
+}
+    public LineDataSet setUserData() {
+
+
+
+        EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid);
+        enrollmentRepository = enrollmentRepository.byProgram().eq(programUid);
+        String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
+
+        List<Event> events = d2.eventModule().events().byEnrollmentUid().eq(enrollmentUid).byProgramUid().eq(programUid).byProgramStageUid().eq("Hj9JdKUS4Hj").blockingGet();
         DataElement heightElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
-        heightElement.name();
+
         List<String> list = new ArrayList<String>();
         for (Event event : events) {
             TrackedEntityDataValue temp = d2.trackedEntityModule().
