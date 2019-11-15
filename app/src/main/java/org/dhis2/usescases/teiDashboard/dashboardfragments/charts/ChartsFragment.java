@@ -31,9 +31,7 @@ import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
 import org.dhis2.usescases.sync.SyncContracts;
-import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
-import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -53,8 +51,6 @@ import androidx.databinding.DataBindingUtil;
 
 
 import io.reactivex.functions.Consumer;
-import timber.log.Timber;
-
 
 public class ChartsFragment extends FragmentGlobalAbstract implements ChartsContracts.View {
 
@@ -70,17 +66,43 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         presenter.init(this);
 
         List<LineData> charts = new ArrayList<LineData>();
-        ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
+
+        String gender = presenter.getGender();
+
+        String fileHFA = "";
+        String fileWFA = "";
+        String fileWFH = "";
+
+        switch (gender) {
+
+            case "M":
+            case "Male":
+                fileHFA = "hfa_boys_z.txt";
+                fileWFA = "wfa_boys_z.txt";
+                fileWFH = "wfh_boys_z.txt";
+                break;
+
+            default:
+                fileHFA = "hfa_girls_z.txt";
+                fileWFA = "wfa_girls_z.txt";
+                fileWFH = "wfh_girls_z.txt";
+                break;
+        }
+
+        ArrayList<ILineDataSet> dataSets = readSDValues(fileHFA);
         dataSets.add(addUserData());
-        charts.add( new LineData(dataSets));
+        charts.add(new LineData(dataSets));
 
-        ArrayList<ILineDataSet> dataSetsWFA = readSDValues("wfa_girls_z.txt");
+        ArrayList<ILineDataSet> dataSetsWFA = readSDValues(fileWFA);
         dataSetsWFA.add(import_child_values(2));
-        charts.add( new LineData(dataSetsWFA));
+        charts.add(new LineData(dataSetsWFA));
 
-        ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfh_girls_z.txt");
+        ArrayList<ILineDataSet> dataSetsWFH = readSDValues(fileWFH);
         dataSetsWFH.add(import_child_values(3));
-        charts.add( new LineData(dataSetsWFH));
+        charts.add(new LineData(dataSetsWFH));
+
+
+
         adapter.setItems(charts);
     }
 

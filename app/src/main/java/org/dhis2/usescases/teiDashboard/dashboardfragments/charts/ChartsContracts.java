@@ -25,6 +25,7 @@ public class ChartsContracts {
         LineDataSet setUserData();
         boolean hasProgramWritePermission();
         List<Entry> importChild(int chartType);
+        String getGender();
 
     }
 

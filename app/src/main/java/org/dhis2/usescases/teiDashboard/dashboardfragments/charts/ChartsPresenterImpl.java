@@ -12,9 +12,13 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.hisp.dhis.android.core.D2;
+import org.hisp.dhis.android.core.common.ObjectWithUid;
+import org.hisp.dhis.android.core.datavalue.DataValue;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 
 import org.hisp.dhis.android.core.event.Event;
+import org.hisp.dhis.android.core.program.ProgramTrackedEntityAttribute;
+import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue;
 import org.hisp.dhis.android.core.dataelement.DataElement;
 import org.hisp.dhis.android.core.enrollment.EnrollmentCollectionRepository;
@@ -29,7 +33,7 @@ import java.util.Date;
 import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
-
+import timber.log.Timber;
 
 
 import static android.text.TextUtils.isEmpty;
@@ -94,6 +98,23 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
 
     }
 
+    public String getGender() {
+        String gender;
+        TrackedEntityAttributeValue genderData = d2.trackedEntityModule().trackedEntityAttributeValues().byTrackedEntityInstance().in(teiUid)
+                .byTrackedEntityAttribute().in("cejWyOfXge6").one().blockingGet();
+
+        if( genderData == null){
+            gender = "Male";
+        }
+        else{
+            gender = genderData.value();
+        }
+
+        return  gender;
+    }
+
+
+
     public List<Entry> importChild(int chartType){
 
         List<Entry> entries = new ArrayList<>();
@@ -113,7 +134,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
                     Date d = height.created();
 
                     Enrollment birthdate = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid).one().blockingGet();
-                    Date bd = birthdate.enrollmentDate();
+                    Date bd = birthdate.incidentDate();
 
 
                     long diff = d.getTime() - bd.getTime();
@@ -132,10 +153,12 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
                     TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
                     String w = weight.value();
 
+
                     Date d = weight.created();
 
                     Enrollment birthdate = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid).one().blockingGet();
-                    Date bd = birthdate.enrollmentDate();
+                    Date bd = birthdate.incidentDate();
+
 
 
                     long diff = d.getTime() - bd.getTime();
