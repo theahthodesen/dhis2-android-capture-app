@@ -43,17 +43,15 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
     }
 
     public void bind(LineData model){
+        binding.chart.clear();
         binding.chart.setData(model);
         binding.chart.getXAxis().setDrawGridLinesBehindData(true);
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
-        MarkerView marker = new CustomMarkerView( binding.getRoot().getContext(),R.layout.tvcontent);
-        marker.setChartView(binding.chart);
+        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent);
         binding.chart.setMarker(marker);
         binding.chart.setTouchEnabled(true);
         binding.chart.setDragEnabled(false);
         binding.chart.setScaleEnabled(false);
-
-
 
         binding.executePendingBindings();
         itemView.setOnClickListener(view->{

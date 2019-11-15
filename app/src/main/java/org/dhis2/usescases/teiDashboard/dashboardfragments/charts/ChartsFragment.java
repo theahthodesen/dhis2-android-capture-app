@@ -1,6 +1,7 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Path;
@@ -29,9 +30,14 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.dhis2.App;
 import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
+import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity;
+import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureFragment.EventCaptureFormFragment;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
 import org.dhis2.usescases.sync.SyncContracts;
+import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
+import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
+import org.dhis2.usescases.teiDashboard.dashboardfragments.notes.NotesFragment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,9 +54,12 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.FragmentTransaction;
 
 
 import io.reactivex.functions.Consumer;
+import timber.log.Timber;
+
 
 public class ChartsFragment extends FragmentGlobalAbstract implements ChartsContracts.View {
 
@@ -65,8 +74,44 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         super.onResume();
         presenter.init(this);
 
-        List<LineData> charts = new ArrayList<LineData>();
+    }
 
+    public void onAttach(Context context){
+        super.onAttach(context);
+        TeiDashboardMobileActivity activity = (TeiDashboardMobileActivity) context;
+        if (((App) context.getApplicationContext()).dashboardComponent() != null)
+            ((App) context.getApplicationContext())
+                    .dashboardComponent()
+                    .plus(new ChartsModule(activity.getProgramUid(), activity.getTeiUid()))
+                    .inject(this);
+    }
+
+    public void addChart(View view) {
+        if (!presenter.hasProgramWritePermission()) {
+
+            displayMessage(getString(R.string.search_access_error));
+        } else {
+
+        }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
+        childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
+        adapter = new ChartsAdapter();
+        binding.chartsRecycler.setAdapter(adapter);
+        binding.addChartButton.setOnClickListener(this::test);
+        binding.heightforage.setOnClickListener(this::set_height_for_age);
+        binding.weightforage.setOnClickListener(this::set_weight_for_age);
+        binding.weightforheight.setOnClickListener(this::set_weight_for_height);
+        List<LineData> charts = new ArrayList<LineData>();
         String gender = presenter.getGender();
 
         String fileHFA = "";
@@ -90,55 +135,27 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         }
 
         ArrayList<ILineDataSet> dataSets = readSDValues(fileHFA);
-        dataSets.add(addUserData());
-        charts.add(new LineData(dataSets));
-
+        dataSets.add(import_child_values(1));
+        charts.add( new LineData(dataSets));
         ArrayList<ILineDataSet> dataSetsWFA = readSDValues(fileWFA);
         dataSetsWFA.add(import_child_values(2));
-        charts.add(new LineData(dataSetsWFA));
+        charts.add( new LineData(dataSetsWFA));
 
         ArrayList<ILineDataSet> dataSetsWFH = readSDValues(fileWFH);
         dataSetsWFH.add(import_child_values(3));
-        charts.add(new LineData(dataSetsWFH));
-
-
-
+        charts.add( new LineData(dataSetsWFH));
         adapter.setItems(charts);
-    }
-
-    public void onAttach(Context context){
-        super.onAttach(context);
-        TeiDashboardMobileActivity activity = (TeiDashboardMobileActivity) context;
-        if (((App) context.getApplicationContext()).dashboardComponent() != null)
-            ((App) context.getApplicationContext())
-                    .dashboardComponent()
-                    .plus(new ChartsModule(activity.getProgramUid(), activity.getTeiUid()))
-                    .inject(this);
-    }
-
-    public void addChart(View view) {
-        if (!presenter.hasProgramWritePermission()) {
-
-            displayMessage(getString(R.string.search_access_error));
-        } else {
-
-        }
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
-        adapter = new ChartsAdapter();
-        binding.chartsRecycler.setAdapter(adapter);
-        binding.heightforage.setOnClickListener(this::set_height_for_age);
-        binding.weightforage.setOnClickListener(this::set_weight_for_age);
-        binding.weightforheight.setOnClickListener(this::set_weight_for_height);
-
 
         return binding.getRoot();
     }
 
+
+    public void test(View i) {
+        Intent intent = new Intent(getContext(), EventCaptureActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+        intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
+        startActivity(intent);
+    }
     public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
 
         BufferedReader reader;
@@ -169,7 +186,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             int count = 1;
             ArrayList<LineDataSet> lineDataSetList =  new ArrayList<LineDataSet>();
             for (int i = 0; i < datasets.size(); i++) {
-                lineDataSetList.add(new LineDataSet(datasets.get(i),Integer.toString(i)));
+                lineDataSetList.add(new LineDataSet(datasets.get(i),String.valueOf(i)));
             }
 
                 for (int i = 0; i < lineDataSetList.size()-1; i++) {
@@ -203,11 +220,13 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     public LineDataSet import_child_values(int chartType){
 
         List<Entry> entries = presenter.importChild(chartType);
-        LineDataSet child = new LineDataSet(entries, "Child");
+        LineDataSet child = new LineDataSet(entries, "Child data");
         child.setFormLineWidth(0.7f);
         child.setColor(Color.BLACK);
         child.setCircleColor(Color.BLACK);
         child.setCircleHoleColor(Color.BLACK);
+        child.setLineWidth(1f);
+        child.setCircleRadius(3f);
         return child;
 
     }
@@ -233,48 +252,6 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         resetTypefaceChart();
         adapter.setchartType("height_for_age");
         binding.heightforage.setTypeface(null, Typeface.BOLD);
-    }
-    public LineChart setStyling(LineChart chart, List<LineDataSet> sets){
-
-        int loop = sets.size()/2;
-        int middle = Math.round(sets.size()/2);
-        for(int i = 1; i < loop; i++){
-            int c = getColor(i);
-            sets.get(middle+i).setFillColor(c);
-            sets.get(middle+i).setDrawFilled(true);
-            sets.get(middle-i).setFillColor(c);
-            sets.get(middle-i).setDrawFilled(true);
-            sets.get(middle+i).setFillFormatter(new IFillFormatter() {
-            @Override
-            public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
-                // change the return value here to better understand the effect
-                //  return 600;
-                return chart.getAxisLeft().getAxisMaximum();
-            }});
-
-            sets.get(middle-i).setFillFormatter(new IFillFormatter() {
-                @Override
-                public float getFillLinePosition(ILineDataSet dataSet, LineDataProvider dataProvider) {
-                    // change the return value here to better understand the effect
-                    //  return 600;
-                    return chart.getAxisLeft().getAxisMinimum();
-                }});
-        }
-
-        return chart;
-    }
-
-    public int getColor(int i) {
-        int color = Color.GREEN;
-        switch(i) {
-            case 1: color = Color.YELLOW;
-                break;
-            case 2: color = Color.rgb(255,215,0);
-                break;
-            case 3: color = Color.RED;
-                break;
-        }
-        return color;
     }
 
     public LineDataSet setColor(LineDataSet dataset){
