@@ -3,12 +3,14 @@ package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.widget.TextView;
 import org.dhis2.R;
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.IMarker;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -42,7 +44,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
     }
 
-    public void bind(LineData model){
+    public void bind(LineData model, int days){
         binding.chart.clear();
         binding.chart.setData(model);
         binding.chart.getXAxis().setDrawGridLinesBehindData(true);
@@ -52,10 +54,19 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         binding.chart.setTouchEnabled(true);
         binding.chart.setDragEnabled(false);
         binding.chart.setScaleEnabled(false);
+        if(days > 0) {
+            LimitLine dayLine = new LimitLine(days, "Today is day: " + days);
+            dayLine.setLineWidth(0.5f);
+            dayLine.enableDashedLine(10f, 10f, 0f);
+            dayLine.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_TOP);
+            dayLine.setTextSize(10f);
+            dayLine.setTypeface(Typeface.DEFAULT);
+            binding.chart.getXAxis().addLimitLine(dayLine);
+        }
+
 
         binding.executePendingBindings();
         itemView.setOnClickListener(view->{
-
         });
         binding.chart.invalidate();
     }
@@ -74,7 +85,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
 
-            tvContent.setText("" + e.getY()); // set the entry-value as the display text
+            tvContent.setText("x: " + e.getX() + " | y: " + e.getY() ); // set the entry-value as the display text
             super.refreshContent(e, highlight);
 
         }

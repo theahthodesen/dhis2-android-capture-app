@@ -120,35 +120,6 @@ public void test(){  Calendar cal = Calendar.getInstance();
         d2Error.printStackTrace();
     }
 }
-    public LineDataSet setUserData() {
-        EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
-        String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
-
-        List<Event> events = d2.eventModule().events().byEnrollmentUid().eq(enrollmentUid).byProgramUid().eq(programUid).byProgramStageUid().eq("Hj9JdKUS4Hj").blockingGet();
-        DataElement heightElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
-
-        List<String> list = new ArrayList<String>();
-        for (Event event : events) {
-            TrackedEntityDataValue temp = d2.trackedEntityModule().
-                    trackedEntityDataValues().
-                    byEvent().eq(event.uid()).
-                    byDataElement().
-                    in(heightElement.
-                            uid()).
-                    one().
-                    blockingGet();
-            list.add(temp.value());
-        }
-        ArrayList<Entry> values = new ArrayList<>();
-
-        for (int i = 0; i < list.size(); i++){
-            float val = (float) Float.parseFloat(list.get(i));
-            values.add(new Entry(i*100, val));
-        }
-        LineDataSet linedataset = new LineDataSet(values, "tester");
-        linedataset.setColor(Color.BLACK);
-        return linedataset;
-    }
 
     @Override
     public void init(ChartsContracts.View view) {
@@ -156,7 +127,20 @@ public void test(){  Calendar cal = Calendar.getInstance();
         this.compositeDisposable = new CompositeDisposable();
 
     }
-
+    public int getTodayInt(int chartType){
+        if (chartType == 1 || chartType == 2) {
+            EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
+            Date incidentDate = enrollmentRepository.one().blockingGet().incidentDate();
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(DateUtils.getInstance().getCalendar().getTime());
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            long diff = cal.getTime().getTime() - incidentDate.getTime();
+            return (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+        } else return -1;
+    }
     public List<Entry> importChild(int chartType){
         EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
         String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
@@ -167,7 +151,7 @@ public void test(){  Calendar cal = Calendar.getInstance();
         Collections.sort(events, new Comparator<Event>() {
             @Override
             public int compare(Event o1, Event o2) {
-                return (int) ( o2.eventDate().getTime() - o1.eventDate().getTime());
+                return ( o1.eventDate().compareTo(o2.eventDate()));
             }
         });
 
@@ -182,19 +166,9 @@ public void test(){  Calendar cal = Calendar.getInstance();
 
                     TrackedEntityDataValue height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).one().blockingGet();
                     String h = height.value();
-                    TrackedEntityDataValue date = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(dateDataElement.uid()).one().blockingGet();
                     Date d = e.eventDate();
-                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-                    String strDate = formatter.format(d);
-                    System.out.println("1uyuyuy e.created with MM/dd/yyyy : "+strDate);
-
-                    d = e.eventDate();
-                     strDate = formatter.format(d);
-                    System.out.println("2uyuyuy eventdate with MM/dd/yyyy : "+strDate);
 
                     long diff = d.getTime() - incidentDate.getTime();
-                    System.out.println("3uyuyuy eventdate with MM/dd/yyyy : "+TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS));
-
                     entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Integer.parseInt(h)));
                 }
                 break;
@@ -210,9 +184,7 @@ public void test(){  Calendar cal = Calendar.getInstance();
                     entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Integer.parseInt(w)));
                 }
                 break;
-
             case 3:
-
                 for(Event e : events){
 
                     TrackedEntityDataValue height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).one().blockingGet();

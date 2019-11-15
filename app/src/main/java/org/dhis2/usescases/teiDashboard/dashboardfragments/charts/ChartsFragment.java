@@ -95,17 +95,17 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         }
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
-        childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
-    }
+ //   @Override
+   // public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+      //  FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
+     //   childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
+  //  }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
-        adapter = new ChartsAdapter();
+        adapter = new ChartsAdapter(presenter.getTodayInt(1));
         binding.chartsRecycler.setAdapter(adapter);
         binding.addChartButton.setOnClickListener(this::test);
         binding.heightforage.setOnClickListener(this::set_height_for_age);
@@ -173,7 +173,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
                     lineDataSetList.get(i).setDrawCircles(false);
                     lineDataSetList.get(i).setLineWidth(0.2f);
                     lineDataSetList.get(i).setDrawCircleHole(false);
-                    lineDataSetList.get(i).setFillAlpha(170);
+                    lineDataSetList.get(i).setFillAlpha(140);
                     lineDataSetList.get(i).setDrawFilled(true);
                     lineDataSetList.get(i).setHighlightEnabled(false);
                     lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i+1)));
@@ -191,9 +191,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         return sets;
 
     }
-    public LineDataSet addUserData(){
-        return presenter.setUserData();
-    }
+
 
     public LineDataSet import_child_values(int chartType){
 
@@ -204,7 +202,8 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         child.setCircleColor(Color.BLACK);
         child.setCircleHoleColor(Color.BLACK);
         child.setLineWidth(1f);
-        child.setCircleRadius(3f);
+        child.setCircleRadius(2f);
+        child.setFillAlpha(255);
         return child;
 
     }
@@ -217,17 +216,20 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     }
     public void set_weight_for_height(View i) {
         resetTypefaceChart();
+        adapter.setDays(presenter.getTodayInt(2));
         adapter.setchartType("weight_for_height");
         binding.weightforheight.setTypeface(null, Typeface.BOLD);
 
     }
     public void set_weight_for_age(View i) {
         resetTypefaceChart();
+        adapter.setDays(presenter.getTodayInt(1));
         adapter.setchartType("weight_for_age");
         binding.weightforage.setTypeface(null, Typeface.BOLD);
     }
     public void set_height_for_age(View i) {
         resetTypefaceChart();
+        adapter.setDays(presenter.getTodayInt(1));
         adapter.setchartType("height_for_age");
         binding.heightforage.setTypeface(null, Typeface.BOLD);
     }

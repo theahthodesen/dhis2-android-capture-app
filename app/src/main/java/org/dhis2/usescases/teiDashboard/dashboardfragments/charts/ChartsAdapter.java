@@ -25,9 +25,11 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
     private List<LineData> charts;
     String chartType;
-    public ChartsAdapter(){
+    private int days;
+    public ChartsAdapter(int days){
         this.charts = new ArrayList<>();
         chartType = "height_for_age";
+        this.days = days;
     }
 
     @NotNull
@@ -39,20 +41,21 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
     @Override
     public void onBindViewHolder(@NonNull ChartsViewholder holder, int position) {
-        holder.bind(charts.get(chartType(chartType)));
+        holder.bind(charts.get(chartType(chartType)), days);
     }
     @Override
     public int getItemCount() {
         return 1;
     }
-
+    public void setDays(int i) {
+        days = i;
+    }
     public void setItems(List<LineData> charts){
         this.charts = charts;
         notifyDataSetChanged();
     }
 
     public void setchartType(String type) {
-
         chartType = type;
         notifyDataSetChanged();
 
