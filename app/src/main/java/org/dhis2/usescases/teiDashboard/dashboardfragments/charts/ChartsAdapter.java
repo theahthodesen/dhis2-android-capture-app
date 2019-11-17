@@ -41,7 +41,7 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
     @Override
     public void onBindViewHolder(@NonNull ChartsViewholder holder, int position) {
-        holder.bind(charts.get(chartType(chartType)), days);
+        holder.bind(charts.get(chartType(chartType)), days, chartType(chartType));
     }
     @Override
     public int getItemCount() {

@@ -9,6 +9,7 @@ import android.widget.TextView;
 import org.dhis2.R;
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.IMarker;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.MarkerView;
@@ -16,6 +17,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IFillFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
@@ -44,23 +46,53 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
     }
 
-    public void bind(LineData model, int days){
+    public void bind(LineData model, int days, int type){
+        binding.chart.getXAxis().setGranularityEnabled(false);
+        binding.chart.getDescription().setEnabled(false);
+        binding.chart.getLegend().setEnabled(false);
+        binding.chart.getXAxis().removeAllLimitLines();
         binding.chart.clear();
         binding.chart.setData(model);
         binding.chart.getXAxis().setDrawGridLinesBehindData(true);
+        binding.chart.getXAxis().setLabelCount(20);
+
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
         MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent);
         binding.chart.setMarker(marker);
         binding.chart.setTouchEnabled(true);
         binding.chart.setDragEnabled(false);
         binding.chart.setScaleEnabled(false);
-        if(days > 0) {
+        if ( type <2) {
+            binding.chart.getXAxis().setGranularityEnabled(true);
+
+            binding.chart.getXAxis().setGranularity(365);
+
+          binding.chart.getXAxis().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, AxisBase axis) {
+                if (((int)value)  == 0)
+                    return "Birth";
+                else if (((int)value) / 365 == 1)
+                    return "" + ((int)value) / 365 + " year";
+                else if (((int)value) % 365 == 0)
+                        return "" + ((int)value) / 365 + " years";
+                return "test";
+            }
+
+            @Override
+            public String getFormattedValue(float value, AxisBase axis) {
+                return super.getFormattedValue(value, axis);
+            }
+        });
+
+
+        }
+        if(days >= 0) {
             LimitLine dayLine = new LimitLine(days, "Today is day: " + days);
-            dayLine.setLineWidth(0.5f);
+            dayLine.setLineWidth(0.2f);
             dayLine.enableDashedLine(10f, 10f, 0f);
             dayLine.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_TOP);
             dayLine.setTextSize(10f);
-            dayLine.setTypeface(Typeface.DEFAULT);
             binding.chart.getXAxis().addLimitLine(dayLine);
         }
 

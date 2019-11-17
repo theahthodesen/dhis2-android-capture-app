@@ -6,6 +6,7 @@ import com.github.mikephil.charting.data.Entry;
 
 import org.dhis2.usescases.general.AbstractActivityContracts;
 
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -20,6 +21,10 @@ public class ChartsContracts {
 
 
     public interface Presenter extends AbstractActivityContracts.Presenter {
+        String uo();
+        String tei();
+        String getLastEntryDateText();
+        String getLastEntryDayText();
         String getProgramUid();
         String createEvent();
         void init(ChartsContracts.View view);

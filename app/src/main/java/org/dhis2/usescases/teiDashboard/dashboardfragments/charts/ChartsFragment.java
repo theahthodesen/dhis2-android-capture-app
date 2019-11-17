@@ -32,12 +32,16 @@ import org.dhis2.R;
 import org.dhis2.databinding.FragmentChartsBinding;
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity;
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureFragment.EventCaptureFormFragment;
+import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
+import org.dhis2.usescases.programStageSelection.ProgramStageSelectionActivity;
 import org.dhis2.usescases.sync.SyncContracts;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
 import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.notes.NotesFragment;
+import org.dhis2.utils.Constants;
+import org.dhis2.utils.EventCreationType;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,9 +64,20 @@ import androidx.fragment.app.FragmentTransaction;
 import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
+import static org.dhis2.utils.Constants.ENROLLMENT_UID;
+import static org.dhis2.utils.Constants.EVENT_CREATION_TYPE;
+import static org.dhis2.utils.Constants.EVENT_PERIOD_TYPE;
+import static org.dhis2.utils.Constants.EVENT_REPEATABLE;
+import static org.dhis2.utils.Constants.EVENT_SCHEDULE_INTERVAL;
+import static org.dhis2.utils.Constants.ORG_UNIT;
+import static org.dhis2.utils.Constants.PROGRAM_UID;
+import static org.dhis2.utils.Constants.TRACKED_ENTITY_INSTANCE;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CREATE_EVENT_TEI;
+import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_EVENT_TEI;
+
 
 public class ChartsFragment extends FragmentGlobalAbstract implements ChartsContracts.View {
-
+    private static final int REQ_EVENT = 2001;
     @Inject
     ChartsContracts.Presenter presenter;
 
@@ -73,7 +88,8 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     public void onResume() {
         super.onResume();
         presenter.init(this);
-
+        binding.incidentDate.setText(presenter.getLastEntryDateText()+ " ");
+        binding.enrollmentDate.setText(presenter.getLastEntryDayText()+ " ");
     }
 
     public void onAttach(Context context){
@@ -129,10 +145,25 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
 
     public void test(View i) {
-        Intent intent = new Intent(getContext(), EventCaptureActivity.class);
+        Intent intent = new Intent(getContext(), EventInitialActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString(PROGRAM_UID, presenter.getProgramUid());
+        bundle.putString(TRACKED_ENTITY_INSTANCE, presenter.tei());
+        bundle.putString(ORG_UNIT, "DiszpKrYNg8");
+        bundle.putString(ENROLLMENT_UID, presenter.uo());
+        bundle.putString(EVENT_CREATION_TYPE, EventCreationType.ADDNEW.name());
+        bundle.putBoolean(EVENT_REPEATABLE, true);
+        bundle.putSerializable(EVENT_PERIOD_TYPE, null);
+        bundle.putString(Constants.PROGRAM_STAGE_UID, "Hj9JdKUS4Hj");
+        bundle.putInt(EVENT_SCHEDULE_INTERVAL, 0);
         intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-        intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
+        intent.putExtras(bundle);
         startActivity(intent);
+
+     //   Intent intent = new Intent(getContext(), EventCaptureActivity.class);
+     //   intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+     //   intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
+     //   startActivity(intent);
     }
     public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
 
