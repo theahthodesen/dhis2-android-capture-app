@@ -52,7 +52,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
     private String teiUid;
     private Date lastDataEntry;
     private Date incidentDate;
-String enrollmentUid;
+    String enrollmentUid;
 
     public String uo(){
         return enrollmentUid;
@@ -84,8 +84,8 @@ String enrollmentUid;
         String date = formatter.format(lastDataEntry);
         return date;
     }
-    public ChartsPresenterImpl(D2 d2, String programUid, String teiUid, DashboardRepository dashboardRepository) {
 
+    public ChartsPresenterImpl(D2 d2, String programUid, String teiUid, DashboardRepository dashboardRepository) {
         this.d2 = d2;
         this.dashboardRepository = dashboardRepository;
         this.programUid = programUid;

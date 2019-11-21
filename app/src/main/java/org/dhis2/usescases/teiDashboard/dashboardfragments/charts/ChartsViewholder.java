@@ -46,7 +46,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
     }
 
-    public void bind(LineData model, int days, int type){
+    public void bind(LineData model, int days, int type, ChartContainer chartContainer){
         binding.chart.getXAxis().setGranularityEnabled(false);
         binding.chart.getDescription().setEnabled(false);
         binding.chart.getLegend().setEnabled(false);
@@ -57,11 +57,11 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         binding.chart.getXAxis().setLabelCount(20);
 
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
-        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent);
+        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent, chartContainer);
         binding.chart.setMarker(marker);
         binding.chart.setTouchEnabled(true);
         binding.chart.setDragEnabled(false);
-        binding.chart.setScaleEnabled(false);
+        binding.chart.setScaleEnabled(true);
         if ( type <2) {
             binding.chart.getXAxis().setGranularityEnabled(true);
 
@@ -100,24 +100,27 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         binding.executePendingBindings();
         itemView.setOnClickListener(view->{
         });
+        binding.chart.setPinchZoom(true);
+        binding.chart.setDragEnabled(true);
         binding.chart.invalidate();
     }
 
     public class CustomMarkerView extends MarkerView {
-
+        ChartContainer chartContainer;
         private TextView tvContent;
-        public CustomMarkerView (Context context, int layoutResource) {
+
+        public CustomMarkerView (Context context, int layoutResource, ChartContainer chartContainer) {
             super(context, layoutResource);
             // this markerview only displays a textview
-            tvContent = (TextView) findViewById(R.id.tvContent);
+            tvContent = (TextView) findViewById(R.id.tvContent);.
+            this.chartContainer = chartContainer;
         }
 
         // callbacks everytime the MarkerView is redrawn, can be used to update the
         // content (user-interface)
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
-
-            tvContent.setText("x: " + e.getX() + " | y: " + e.getY() ); // set the entry-value as the display text
+            tvContent.setText("x:" + e.getX() + "  y:" + e.getY() + " z-score:"+ chartContainer.zScore((int) e.getX(),e.getY())); // set the entry-value as the display text
             super.refreshContent(e, highlight);
 
         }

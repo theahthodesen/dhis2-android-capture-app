@@ -1,5 +1,6 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
@@ -29,6 +30,7 @@ import com.github.mikephil.charting.utils.ViewPortHandler;
 import org.apache.commons.lang3.ArrayUtils;
 import org.dhis2.App;
 import org.dhis2.R;
+import org.dhis2.data.tuples.Quartet;
 import org.dhis2.databinding.FragmentChartsBinding;
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity;
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureFragment.EventCaptureFormFragment;
@@ -130,16 +132,16 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         List<LineData> charts = new ArrayList<LineData>();
         ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
         dataSets.add(import_child_values(1));
-        charts.add( new LineData(dataSets));
+        adapter.addChart(new ChartContainer(new LineData(dataSets), calValues("lhfa_girls_p_exp.txt")));
 
         ArrayList<ILineDataSet> dataSetsWFA = readSDValues("wfa_girls_z.txt");
         dataSetsWFA.add(import_child_values(2));
-        charts.add( new LineData(dataSetsWFA));
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFA), calValues("wfa_girls_p_exp.txt")));
 
         ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfh_girls_z.txt");
         dataSetsWFH.add(import_child_values(3));
-        charts.add( new LineData(dataSetsWFH));
-        adapter.setItems(charts);
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFH), calValues("wfh_girls_p_exp.txt")));
+
         return binding.getRoot();
     }
 
@@ -165,6 +167,59 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
      //   intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
      //   startActivity(intent);
     }
+
+    public ArrayList<Quartet> calValues(String nameOfFile){
+
+        BufferedReader reader;
+        ArrayList<Quartet> lineValues = new ArrayList<>();
+        try {
+            InputStream inputStream = getResources().getAssets().open(nameOfFile);
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            String line = reader.readLine();
+            String[] labels = line.split("\t");
+
+            line = reader.readLine();
+            while (line != null){
+                String[] values = line.split("\t");
+                lineValues.add(new Quartet() {
+                    @NonNull
+                    @Override
+                    public Object val0() {
+                        return Float.parseFloat(values[0]);
+                    }
+
+                    @NonNull
+                    @Override
+                    public Object val1() {
+                        return Float.parseFloat(values[1]);
+                    }
+
+                    @NonNull
+                    @Override
+                    public Object val2() {
+                        return Float.parseFloat(values[2]);
+                    }
+
+                    @NonNull
+                    @Override
+                    public Object val3() {
+                        return Float.parseFloat(values[3]);
+                    }
+                });
+                line = reader.readLine();
+            }
+
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        return lineValues;
+
+    }
+
+
     public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
 
         BufferedReader reader;
