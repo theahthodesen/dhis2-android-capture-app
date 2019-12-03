@@ -47,24 +47,34 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
     }
 
     public void bind(LineData model, int days, int type, ChartContainer chartContainer){
+        binding.chart.fitScreen();
         binding.chart.getXAxis().setGranularityEnabled(false);
+        binding.chart.getXAxis().setLabelCount(6);
+
         binding.chart.getDescription().setEnabled(false);
         binding.chart.getLegend().setEnabled(false);
         binding.chart.getXAxis().removeAllLimitLines();
         binding.chart.clear();
         binding.chart.setData(model);
-        binding.chart.getXAxis().setDrawGridLinesBehindData(true);
-        binding.chart.getXAxis().setLabelCount(20);
+        Entry temp = binding.chart.getLineData().getDataSetByIndex(0).getEntryForIndex(binding.chart.getLineData().getDataSetByIndex(0).getEntryCount()-1);
+        float lengste = temp.getX();
+        temp = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount()-1).getEntryForIndex(binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount()-1).getEntryCount()-1);
+        float lengstedata = temp.getX();
+        int entrycount = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount()-1).getEntryCount();
 
+
+        if( lengste / lengstedata > 1.5 && entrycount > 0)
+            binding.chart.setVisibleXRangeMaximum(((float) (lengstedata*1.5)));
+        binding.chart.getXAxis().setDrawGridLinesBehindData(true);
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
         MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent, chartContainer);
         binding.chart.setMarker(marker);
-        binding.chart.setTouchEnabled(true);
+        binding.chart.setTouchEnabled(false);
         binding.chart.setDragEnabled(false);
-        binding.chart.setScaleEnabled(true);
+        binding.chart.setScaleEnabled(false);
         if ( type <2) {
             binding.chart.getXAxis().setGranularityEnabled(true);
-
+            binding.chart.getXAxis().setLabelCount(20);
             binding.chart.getXAxis().setGranularity(365);
 
           binding.chart.getXAxis().setValueFormatter(new ValueFormatter() {
@@ -76,7 +86,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
                     return "" + ((int)value) / 365 + " year";
                 else if (((int)value) % 365 == 0)
                         return "" + ((int)value) / 365 + " years";
-                return "test";
+                return ""+ value;
             }
 
             @Override
@@ -84,9 +94,8 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
                 return super.getFormattedValue(value, axis);
             }
         });
-
-
         }
+
         if(days >= 0) {
             LimitLine dayLine = new LimitLine(days, "Today is day: " + days);
             dayLine.setLineWidth(0.2f);
@@ -112,7 +121,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         public CustomMarkerView (Context context, int layoutResource, ChartContainer chartContainer) {
             super(context, layoutResource);
             // this markerview only displays a textview
-            tvContent = (TextView) findViewById(R.id.tvContent);.
+            tvContent = (TextView) findViewById(R.id.tvContent);
             this.chartContainer = chartContainer;
         }
 
@@ -120,6 +129,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         // content (user-interface)
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
+
             tvContent.setText("x:" + e.getX() + "  y:" + e.getY() + " z-score:"+ chartContainer.zScore((int) e.getX(),e.getY())); // set the entry-value as the display text
             super.refreshContent(e, highlight);
 

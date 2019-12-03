@@ -39,10 +39,9 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.disposables.CompositeDisposable;
 
 
-
 import static android.text.TextUtils.isEmpty;
 
-public class ChartsPresenterImpl implements ChartsContracts.Presenter{
+public class ChartsPresenterImpl implements ChartsContracts.Presenter {
 
     private final D2 d2;
     private CompositeDisposable compositeDisposable;
@@ -54,11 +53,11 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
     private Date incidentDate;
     String enrollmentUid;
 
-    public String uo(){
+    public String uo() {
         return enrollmentUid;
     }
 
-    public String tei(){
+    public String tei() {
         return teiUid;
     }
 
@@ -68,7 +67,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
 
     }
 
-    public  String getLastEntryDayText(){
+    public String getLastEntryDayText() {
         Calendar cal = Calendar.getInstance();
 
         cal.setTime(DateUtils.getInstance().getCalendar().getTime());
@@ -79,7 +78,8 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
         long diff = cal.getTime().getTime() - lastDataEntry.getTime();
         return String.valueOf(TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS));
     }
-    public  String getLastEntryDateText(){
+
+    public String getLastEntryDateText() {
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");//formating according to my need
         String date = formatter.format(lastDataEntry);
         return date;
@@ -92,9 +92,30 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
         this.teiUid = teiUid;
     }
 
+    public void muacOd(){
+        EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
+        String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
+        Date incidentDate = enrollmentRepository.one().blockingGet().incidentDate();
+        this.incidentDate = incidentDate;
+        List<Entry> entries = new ArrayList<>();
+        List<Event> events = d2.eventModule().events().byEnrollmentUid().eq(enrollmentUid).byProgramStageUid().eq("Hj9JdKUS4Hj").blockingGet();
+        Collections.sort(events, new Comparator<Event>() {
+            @Override
+            public int compare(Event o1, Event o2) {
+                return (o1.eventDate().compareTo(o2.eventDate()));
+            }
+        });
+
+
+        DataElement muac = d2.dataElementModule().dataElements().byUid().eq("FQC0FrFgLOX").one().blockingGet();
+        DataElement od = d2.dataElementModule().dataElements().byUid().eq("H3uHA1L4ND5").one().blockingGet();
+        DataElement dateDataElement = d2.dataElementModule().dataElements().byUid().eq("UpidRR4PfXv").one().blockingGet();
+
+    }
+
     public String createEvent() {
         Calendar cal = Calendar.getInstance();
-        String eventUid ="";
+        String eventUid = "";
         try {
             cal.setTime(DateUtils.getInstance().getCalendar().getTime());
             cal.set(Calendar.HOUR_OF_DAY, 0);
@@ -106,8 +127,8 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter{
             EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid);
             enrollmentRepository = enrollmentRepository.byProgram().eq(programUid);
             String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
-this.enrollmentUid = enrollmentUid;
-             eventUid = d2.eventModule().events().blockingAdd(
+            this.enrollmentUid = enrollmentUid;
+            eventUid = d2.eventModule().events().blockingAdd(
                     EventCreateProjection.create(enrollmentUid, programUid, "Hj9JdKUS4Hj", "DiszpKrYNg8", null));
             EventObjectRepository eventRepository = d2.eventModule().events().uid(eventUid);
             eventRepository.setEventDate(cal.getTime());
@@ -117,36 +138,39 @@ this.enrollmentUid = enrollmentUid;
         return eventUid;
 
     }
-    public String getProgramUid(){
+
+    public String getProgramUid() {
         return programUid;
     }
-public void test(){  Calendar cal = Calendar.getInstance();
 
-    try {
-        cal.setTime(DateUtils.getInstance().getCalendar().getTime());
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
+    public void test() {
+        Calendar cal = Calendar.getInstance();
+
+        try {
+            cal.setTime(DateUtils.getInstance().getCalendar().getTime());
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
 
 
-        EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid);
-        enrollmentRepository = enrollmentRepository.byProgram().eq(programUid);
-        String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
+            EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid);
+            enrollmentRepository = enrollmentRepository.byProgram().eq(programUid);
+            String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
 
-        String eventUid = d2.eventModule().events().blockingAdd(
-                EventCreateProjection.create(enrollmentUid, programUid, "Hj9JdKUS4Hj", "DiszpKrYNg8", null));
-        EventObjectRepository eventRepository = d2.eventModule().events().uid(eventUid);
-        eventRepository.setEventDate(cal.getTime());
+            String eventUid = d2.eventModule().events().blockingAdd(
+                    EventCreateProjection.create(enrollmentUid, programUid, "Hj9JdKUS4Hj", "DiszpKrYNg8", null));
+            EventObjectRepository eventRepository = d2.eventModule().events().uid(eventUid);
+            eventRepository.setEventDate(cal.getTime());
 
-        DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
+            DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
 
-        d2.trackedEntityModule().trackedEntityDataValues().value(eventUid, heightDataElement.uid()).blockingSet("80");
+            d2.trackedEntityModule().trackedEntityDataValues().value(eventUid, heightDataElement.uid()).blockingSet("80");
 
-    } catch (D2Error d2Error) {
-        d2Error.printStackTrace();
+        } catch (D2Error d2Error) {
+            d2Error.printStackTrace();
+        }
     }
-}
 
     @Override
     public void init(ChartsContracts.View view) {
@@ -154,7 +178,8 @@ public void test(){  Calendar cal = Calendar.getInstance();
         this.compositeDisposable = new CompositeDisposable();
 
     }
-    public int getTodayInt(int chartType){
+
+    public int getTodayInt(int chartType) {
         if (chartType == 1 || chartType == 2) {
             EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
             Date incidentDate = enrollmentRepository.one().blockingGet().incidentDate();
@@ -169,7 +194,7 @@ public void test(){  Calendar cal = Calendar.getInstance();
         } else return -1;
     }
 
-    public List<Entry> importChild(int chartType){
+    public List<Entry> importChild(int chartType) {
         EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
         String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
         Date incidentDate = enrollmentRepository.one().blockingGet().incidentDate();
@@ -179,11 +204,12 @@ public void test(){  Calendar cal = Calendar.getInstance();
         Collections.sort(events, new Comparator<Event>() {
             @Override
             public int compare(Event o1, Event o2) {
-                return ( o1.eventDate().compareTo(o2.eventDate()));
+                return (o1.eventDate().compareTo(o2.eventDate()));
             }
         });
-
-        lastDataEntry = events.get(events.size()-1).eventDate();
+        lastDataEntry =incidentDate;
+        if(events.size() > 0)
+        lastDataEntry = events.get(events.size() - 1).eventDate();
 
         DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
         DataElement weightDataElement = d2.dataElementModule().dataElements().byUid().eq("GZZLGtLZwep").one().blockingGet();
@@ -191,39 +217,42 @@ public void test(){  Calendar cal = Calendar.getInstance();
 
         switch (chartType) {
             case 1:
-                for(Event e : events) {
+                for (Event e : events) {
 
                     TrackedEntityDataValue height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).one().blockingGet();
                     String h = height.value();
-                    Date d = e.eventDate();
+                    if (h != null) {
+                        Date d = e.eventDate();
 
-                    long diff = d.getTime() - incidentDate.getTime();
-                    entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Integer.parseInt(h)));
+                        long diff = d.getTime() - incidentDate.getTime();
+                        entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(h)));
+                    }
                 }
                 break;
 
             case 2:
-                for(Event e : events){
+                for (Event e : events) {
 
                     TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
                     String w = weight.value();
-                    Date d = e.eventDate();
+                    if (w != null) {
+                        Date d = e.eventDate();
 
-                    long diff = d.getTime() - incidentDate.getTime();
-                    entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Integer.parseInt(w)));
+                        long diff = d.getTime() - incidentDate.getTime();
+                        entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(w)));
+                    }
                 }
                 break;
             case 3:
-                for(Event e : events){
+                for (Event e : events) {
 
                     TrackedEntityDataValue height = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(heightDataElement.uid()).one().blockingGet();
                     String h = height.value();
 
                     TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
                     String w = weight.value();
-
-                    entries.add(new Entry(Integer.parseInt(h), Integer.parseInt(w)));
-
+                    if (h != null && w != null)
+                        entries.add(new Entry(Float.parseFloat(h), Float.parseFloat(w)));
                 }
                 break;
         }
