@@ -23,13 +23,18 @@ import androidx.recyclerview.widget.RecyclerView;
 
 class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
-    private List<LineData> charts;
     String chartType;
-    public ChartsAdapter(){
-        this.charts = new ArrayList<>();
-        chartType = "height_for_age";
-    }
+    private int days;
+    private ArrayList<ChartContainer> listOfCharts;
 
+    public ChartsAdapter(int days){
+        chartType = "height_for_age";
+        this.days = days;
+        listOfCharts = new ArrayList<>();
+    }
+    public void addChart(ChartContainer chart) {
+        listOfCharts.add(chart);
+    }
     @NotNull
     @Override
     public ChartsViewholder onCreateViewHolder(@NotNull ViewGroup parent, int viewType){
@@ -39,20 +44,17 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
 
     @Override
     public void onBindViewHolder(@NonNull ChartsViewholder holder, int position) {
-        holder.bind(charts.get(chartType(chartType)));
+        holder.bind(listOfCharts.get(chartType(chartType)).getLineData(), days, chartType(chartType), listOfCharts.get(chartType(chartType)));
     }
     @Override
     public int getItemCount() {
         return 1;
     }
-
-    public void setItems(List<LineData> charts){
-        this.charts = charts;
-        notifyDataSetChanged();
+    public void setDays(int i) {
+        days = i;
     }
 
     public void setchartType(String type) {
-
         chartType = type;
         notifyDataSetChanged();
 

@@ -1,5 +1,6 @@
 package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
@@ -29,15 +30,20 @@ import com.github.mikephil.charting.utils.ViewPortHandler;
 import org.apache.commons.lang3.ArrayUtils;
 import org.dhis2.App;
 import org.dhis2.R;
+import org.dhis2.data.tuples.Quartet;
 import org.dhis2.databinding.FragmentChartsBinding;
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureActivity;
 import org.dhis2.usescases.eventsWithoutRegistration.eventCapture.EventCaptureFragment.EventCaptureFormFragment;
+import org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialActivity;
 import org.dhis2.usescases.general.FragmentGlobalAbstract;
+import org.dhis2.usescases.programStageSelection.ProgramStageSelectionActivity;
 import org.dhis2.usescases.sync.SyncContracts;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.usescases.teiDashboard.TeiDashboardMobileActivity;
 import org.dhis2.usescases.teiDashboard.DashboardRepositoryImpl;
 import org.dhis2.usescases.teiDashboard.dashboardfragments.notes.NotesFragment;
+import org.dhis2.utils.Constants;
+import org.dhis2.utils.EventCreationType;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,9 +66,20 @@ import androidx.fragment.app.FragmentTransaction;
 import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
+import static org.dhis2.utils.Constants.ENROLLMENT_UID;
+import static org.dhis2.utils.Constants.EVENT_CREATION_TYPE;
+import static org.dhis2.utils.Constants.EVENT_PERIOD_TYPE;
+import static org.dhis2.utils.Constants.EVENT_REPEATABLE;
+import static org.dhis2.utils.Constants.EVENT_SCHEDULE_INTERVAL;
+import static org.dhis2.utils.Constants.ORG_UNIT;
+import static org.dhis2.utils.Constants.PROGRAM_UID;
+import static org.dhis2.utils.Constants.TRACKED_ENTITY_INSTANCE;
+import static org.dhis2.utils.analytics.AnalyticsConstants.CREATE_EVENT_TEI;
+import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_EVENT_TEI;
+
 
 public class ChartsFragment extends FragmentGlobalAbstract implements ChartsContracts.View {
-
+    private static final int REQ_EVENT = 2001;
     @Inject
     ChartsContracts.Presenter presenter;
 
@@ -73,7 +90,8 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     public void onResume() {
         super.onResume();
         presenter.init(this);
-
+        //binding.incidentDate.setText(presenter.getLastEntryDateText()+ " ");
+        //binding.enrollmentDate.setText(presenter.getLastEntryDayText()+ " ");
     }
 
     public void onAttach(Context context){
@@ -95,28 +113,31 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         }
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
-        childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
-    }
+ //   @Override
+   // public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+      //  FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
+     //   childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
+  //  }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
-        adapter = new ChartsAdapter();
+        adapter = new ChartsAdapter(presenter.getTodayInt(1));
         binding.chartsRecycler.setAdapter(adapter);
-        binding.addChartButton.setOnClickListener(this::test);
+        //binding.addChartButton.setOnClickListener(this::test);
         binding.heightforage.setOnClickListener(this::set_height_for_age);
         binding.weightforage.setOnClickListener(this::set_weight_for_age);
         binding.weightforheight.setOnClickListener(this::set_weight_for_height);
         List<LineData> charts = new ArrayList<LineData>();
         String gender = presenter.getGender();
 
-        String fileHFA = "";
-        String fileWFA = "";
-        String fileWFH = "";
+        String fileHFA;
+        String fileWFA;
+        String fileWFH;
+        String fileCalculateZHFA;
+        String fileCalculateZWFA;
+        String fileCalculateZWFH;
 
         switch (gender) {
 
@@ -125,37 +146,113 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
                 fileHFA = "hfa_boys_z.txt";
                 fileWFA = "wfa_boys_z.txt";
                 fileWFH = "wfh_boys_z.txt";
+                fileCalculateZHFA = "lhfa_boys_p_exp.txt";
+                fileCalculateZWFA = "wfa_boys_p_exp.txt";
+                fileCalculateZWFH = "wfh_boys_p_exp.txt";
                 break;
 
             default:
                 fileHFA = "hfa_girls_z.txt";
                 fileWFA = "wfa_girls_z.txt";
                 fileWFH = "wfh_girls_z.txt";
+                fileCalculateZHFA = "lhfa_girls_p_exp.txt";
+                fileCalculateZWFA = "wfa_girls_p_exp.txt";
+                fileCalculateZWFH = "wfh_girls_p_exp.txt";
                 break;
         }
 
+
         ArrayList<ILineDataSet> dataSets = readSDValues(fileHFA);
         dataSets.add(import_child_values(1));
-        charts.add( new LineData(dataSets));
+        adapter.addChart(new ChartContainer(new LineData(dataSets), calValues(fileCalculateZHFA)));
+
         ArrayList<ILineDataSet> dataSetsWFA = readSDValues(fileWFA);
         dataSetsWFA.add(import_child_values(2));
-        charts.add( new LineData(dataSetsWFA));
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFA), calValues(fileCalculateZWFA)));
 
         ArrayList<ILineDataSet> dataSetsWFH = readSDValues(fileWFH);
         dataSetsWFH.add(import_child_values(3));
-        charts.add( new LineData(dataSetsWFH));
-        adapter.setItems(charts);
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFH), calValues(fileCalculateZWFH)));
+
 
         return binding.getRoot();
     }
 
 
     public void test(View i) {
-        Intent intent = new Intent(getContext(), EventCaptureActivity.class);
+        Intent intent = new Intent(getContext(), EventInitialActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString(PROGRAM_UID, presenter.getProgramUid());
+        bundle.putString(TRACKED_ENTITY_INSTANCE, presenter.tei());
+        bundle.putString(ORG_UNIT, "DiszpKrYNg8");
+        bundle.putString(ENROLLMENT_UID, presenter.uo());
+        bundle.putString(EVENT_CREATION_TYPE, EventCreationType.ADDNEW.name());
+        bundle.putBoolean(EVENT_REPEATABLE, true);
+        bundle.putSerializable(EVENT_PERIOD_TYPE, null);
+        bundle.putString(Constants.PROGRAM_STAGE_UID, "Hj9JdKUS4Hj");
+        bundle.putInt(EVENT_SCHEDULE_INTERVAL, 0);
         intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-        intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
+        intent.putExtras(bundle);
         startActivity(intent);
+
+     //   Intent intent = new Intent(getContext(), EventCaptureActivity.class);
+     //   intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+     //   intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
+     //   startActivity(intent);
     }
+
+    public ArrayList<Quartet> calValues(String nameOfFile){
+
+        BufferedReader reader;
+        ArrayList<Quartet> lineValues = new ArrayList<>();
+        try {
+            InputStream inputStream = getResources().getAssets().open(nameOfFile);
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            String line = reader.readLine();
+            String[] labels = line.split("\t");
+
+            line = reader.readLine();
+            while (line != null){
+                String[] values = line.split("\t");
+                lineValues.add(new Quartet() {
+                    @NonNull
+                    @Override
+                    public Object val0() {
+                        return Float.parseFloat(values[0]);
+                    }
+
+                    @NonNull
+                    @Override
+                    public Object val1() {
+                        return Float.parseFloat(values[1]);
+                    }
+
+                    @NonNull
+                    @Override
+                    public Object val2() {
+                        return Float.parseFloat(values[2]);
+                    }
+
+                    @NonNull
+                    @Override
+                    public Object val3() {
+                        return Float.parseFloat(values[3]);
+                    }
+                });
+                line = reader.readLine();
+            }
+
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        return lineValues;
+
+    }
+
+
     public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
 
         BufferedReader reader;
@@ -195,7 +292,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
                     lineDataSetList.get(i).setDrawCircles(false);
                     lineDataSetList.get(i).setLineWidth(0.2f);
                     lineDataSetList.get(i).setDrawCircleHole(false);
-                    lineDataSetList.get(i).setFillAlpha(170);
+                    lineDataSetList.get(i).setFillAlpha(140);
                     lineDataSetList.get(i).setDrawFilled(true);
                     lineDataSetList.get(i).setHighlightEnabled(false);
                     lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i+1)));
@@ -213,20 +310,19 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         return sets;
 
     }
-    public LineDataSet addUserData(){
-        return presenter.setUserData();
-    }
+
 
     public LineDataSet import_child_values(int chartType){
 
         List<Entry> entries = presenter.importChild(chartType);
         LineDataSet child = new LineDataSet(entries, "Child data");
-        child.setFormLineWidth(0.7f);
+        child.setFormLineWidth(0.8f);
         child.setColor(Color.BLACK);
         child.setCircleColor(Color.BLACK);
         child.setCircleHoleColor(Color.BLACK);
-        child.setLineWidth(1f);
-        child.setCircleRadius(3f);
+        child.setLineWidth(1.2f);
+        child.setCircleRadius(2.5f);
+        child.setFillAlpha(255);
         return child;
 
     }
@@ -239,17 +335,20 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     }
     public void set_weight_for_height(View i) {
         resetTypefaceChart();
+        adapter.setDays(presenter.getTodayInt(2));
         adapter.setchartType("weight_for_height");
         binding.weightforheight.setTypeface(null, Typeface.BOLD);
 
     }
     public void set_weight_for_age(View i) {
         resetTypefaceChart();
+        adapter.setDays(presenter.getTodayInt(1));
         adapter.setchartType("weight_for_age");
         binding.weightforage.setTypeface(null, Typeface.BOLD);
     }
     public void set_height_for_age(View i) {
         resetTypefaceChart();
+        adapter.setDays(presenter.getTodayInt(1));
         adapter.setchartType("height_for_age");
         binding.heightforage.setTypeface(null, Typeface.BOLD);
     }

@@ -3,17 +3,21 @@ package org.dhis2.usescases.teiDashboard.dashboardfragments.charts;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Path;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.widget.TextView;
 import org.dhis2.R;
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.IMarker;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IFillFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
@@ -42,39 +46,81 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
     }
 
-    public void bind(LineData model){
+    public void bind(LineData model, int days, int type, ChartContainer chartContainer){
+        binding.chart.getXAxis().setGranularityEnabled(false);
+        binding.chart.getDescription().setEnabled(false);
+        binding.chart.getLegend().setEnabled(false);
+        binding.chart.getXAxis().removeAllLimitLines();
         binding.chart.clear();
         binding.chart.setData(model);
         binding.chart.getXAxis().setDrawGridLinesBehindData(true);
+        binding.chart.getXAxis().setLabelCount(20);
+
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
-        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent);
+        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent, chartContainer);
         binding.chart.setMarker(marker);
         binding.chart.setTouchEnabled(true);
         binding.chart.setDragEnabled(false);
-        binding.chart.setScaleEnabled(false);
+        binding.chart.setScaleEnabled(true);
+        if ( type <2) {
+            binding.chart.getXAxis().setGranularityEnabled(true);
+
+            binding.chart.getXAxis().setGranularity(365);
+
+          binding.chart.getXAxis().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, AxisBase axis) {
+                if (((int)value)  == 0)
+                    return "Birth";
+                else if (((int)value) / 365 == 1)
+                    return "" + ((int)value) / 365 + " year";
+                else if (((int)value) % 365 == 0)
+                        return "" + ((int)value) / 365 + " years";
+                return "test";
+            }
+
+            @Override
+            public String getFormattedValue(float value, AxisBase axis) {
+                return super.getFormattedValue(value, axis);
+            }
+        });
+
+
+        }
+        if(days >= 0) {
+            LimitLine dayLine = new LimitLine(days, "Today is day: " + days);
+            dayLine.setLineWidth(0.2f);
+            dayLine.enableDashedLine(10f, 10f, 0f);
+            dayLine.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT_TOP);
+            dayLine.setTextSize(10f);
+            binding.chart.getXAxis().addLimitLine(dayLine);
+        }
+
 
         binding.executePendingBindings();
         itemView.setOnClickListener(view->{
-
         });
+        binding.chart.setPinchZoom(true);
+        binding.chart.setDragEnabled(true);
         binding.chart.invalidate();
     }
 
     public class CustomMarkerView extends MarkerView {
-
+        ChartContainer chartContainer;
         private TextView tvContent;
-        public CustomMarkerView (Context context, int layoutResource) {
+
+        public CustomMarkerView (Context context, int layoutResource, ChartContainer chartContainer) {
             super(context, layoutResource);
             // this markerview only displays a textview
             tvContent = (TextView) findViewById(R.id.tvContent);
+            this.chartContainer = chartContainer;
         }
 
         // callbacks everytime the MarkerView is redrawn, can be used to update the
         // content (user-interface)
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
-
-            tvContent.setText("" + e.getY()); // set the entry-value as the display text
+            tvContent.setText("x:" + e.getX() + "  y:" + e.getY() + " z-score:"+ chartContainer.zScore((int) e.getX(),e.getY())); // set the entry-value as the display text
             super.refreshContent(e, highlight);
 
         }
