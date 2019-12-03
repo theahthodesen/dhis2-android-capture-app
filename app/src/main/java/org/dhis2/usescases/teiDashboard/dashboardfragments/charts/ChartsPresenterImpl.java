@@ -218,7 +218,7 @@ public void test(){  Calendar cal = Calendar.getInstance();
                     Date d = e.eventDate();
 
                     long diff = d.getTime() - incidentDate.getTime();
-                    entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Integer.parseInt(h)));
+                    entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(h)));
                 }
                 break;
 
@@ -230,7 +230,7 @@ public void test(){  Calendar cal = Calendar.getInstance();
                     Date d = e.eventDate();
 
                     long diff = d.getTime() - incidentDate.getTime();
-                    entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Integer.parseInt(w)));
+                    entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(w)));
                 }
                 break;
             case 3:
@@ -242,7 +242,7 @@ public void test(){  Calendar cal = Calendar.getInstance();
                     TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
                     String w = weight.value();
 
-                    entries.add(new Entry(Integer.parseInt(h), Integer.parseInt(w)));
+                    entries.add(new Entry(Float.parseFloat(h), Float.parseFloat(w)));
 
                 }
                 break;

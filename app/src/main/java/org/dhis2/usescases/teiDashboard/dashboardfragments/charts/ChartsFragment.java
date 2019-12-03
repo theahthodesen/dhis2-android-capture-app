@@ -158,7 +158,6 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
                 fileCalculateZHFA = "lhfa_girls_p_exp.txt";
                 fileCalculateZWFA = "wfa_girls_p_exp.txt";
                 fileCalculateZWFH = "wfh_girls_p_exp.txt";
-                break;
         }
 
 
@@ -316,12 +315,12 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
         List<Entry> entries = presenter.importChild(chartType);
         LineDataSet child = new LineDataSet(entries, "Child data");
-        child.setFormLineWidth(0.8f);
+        child.setFormLineWidth(0.7f);
         child.setColor(Color.BLACK);
         child.setCircleColor(Color.BLACK);
         child.setCircleHoleColor(Color.BLACK);
-        child.setLineWidth(1.2f);
-        child.setCircleRadius(2.5f);
+        child.setLineWidth(1f);
+        child.setCircleRadius(2f);
         child.setFillAlpha(255);
         return child;
 
