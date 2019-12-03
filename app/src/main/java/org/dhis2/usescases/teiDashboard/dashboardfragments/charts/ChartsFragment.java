@@ -90,8 +90,8 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     public void onResume() {
         super.onResume();
         presenter.init(this);
-        binding.incidentDate.setText(presenter.getLastEntryDateText()+ " ");
-        binding.enrollmentDate.setText(presenter.getLastEntryDayText()+ " ");
+        //binding.incidentDate.setText(presenter.getLastEntryDateText()+ " ");
+        //binding.enrollmentDate.setText(presenter.getLastEntryDayText()+ " ");
     }
 
     public void onAttach(Context context){
@@ -125,22 +125,54 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_charts, container, false);
         adapter = new ChartsAdapter(presenter.getTodayInt(1));
         binding.chartsRecycler.setAdapter(adapter);
-        binding.addChartButton.setOnClickListener(this::test);
+        //binding.addChartButton.setOnClickListener(this::test);
         binding.heightforage.setOnClickListener(this::set_height_for_age);
         binding.weightforage.setOnClickListener(this::set_weight_for_age);
         binding.weightforheight.setOnClickListener(this::set_weight_for_height);
         List<LineData> charts = new ArrayList<LineData>();
-        ArrayList<ILineDataSet> dataSets = readSDValues("hfa_girls_z.txt");
+        String gender = presenter.getGender();
+
+        String fileHFA;
+        String fileWFA;
+        String fileWFH;
+        String fileCalculateZHFA;
+        String fileCalculateZWFA;
+        String fileCalculateZWFH;
+
+        switch (gender) {
+
+            case "M":
+            case "Male":
+                fileHFA = "hfa_boys_z.txt";
+                fileWFA = "wfa_boys_z.txt";
+                fileWFH = "wfh_boys_z.txt";
+                fileCalculateZHFA = "lhfa_boys_p_exp.txt";
+                fileCalculateZWFA = "wfa_boys_p_exp.txt";
+                fileCalculateZWFH = "wfh_boys_p_exp.txt";
+                break;
+
+            default:
+                fileHFA = "hfa_girls_z.txt";
+                fileWFA = "wfa_girls_z.txt";
+                fileWFH = "wfh_girls_z.txt";
+                fileCalculateZHFA = "lhfa_girls_p_exp.txt";
+                fileCalculateZWFA = "wfa_girls_p_exp.txt";
+                fileCalculateZWFH = "wfh_girls_p_exp.txt";
+        }
+
+
+        ArrayList<ILineDataSet> dataSets = readSDValues(fileHFA);
         dataSets.add(import_child_values(1));
-        adapter.addChart(new ChartContainer(new LineData(dataSets), calValues("lhfa_girls_p_exp.txt")));
+        adapter.addChart(new ChartContainer(new LineData(dataSets), calValues(fileCalculateZHFA)));
 
-        ArrayList<ILineDataSet> dataSetsWFA = readSDValues("wfa_girls_z.txt");
+        ArrayList<ILineDataSet> dataSetsWFA = readSDValues(fileWFA);
         dataSetsWFA.add(import_child_values(2));
-        adapter.addChart(new ChartContainer(new LineData(dataSetsWFA), calValues("wfa_girls_p_exp.txt")));
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFA), calValues(fileCalculateZWFA)));
 
-        ArrayList<ILineDataSet> dataSetsWFH = readSDValues("wfh_girls_z.txt");
+        ArrayList<ILineDataSet> dataSetsWFH = readSDValues(fileWFH);
         dataSetsWFH.add(import_child_values(3));
-        adapter.addChart(new ChartContainer(new LineData(dataSetsWFH), calValues("wfh_girls_p_exp.txt")));
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFH), calValues(fileCalculateZWFH)));
+
 
         return binding.getRoot();
     }

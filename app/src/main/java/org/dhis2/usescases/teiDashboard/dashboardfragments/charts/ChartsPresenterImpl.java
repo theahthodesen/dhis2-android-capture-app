@@ -13,12 +13,15 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.utils.DateUtils;
 import org.hisp.dhis.android.core.D2;
+import org.hisp.dhis.android.core.common.ObjectWithUid;
+import org.hisp.dhis.android.core.datavalue.DataValue;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 
 import org.hisp.dhis.android.core.event.Event;
 import org.hisp.dhis.android.core.event.EventCreateProjection;
 import org.hisp.dhis.android.core.event.EventObjectRepository;
 import org.hisp.dhis.android.core.maintenance.D2Error;
+import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttributeValue;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue;
 import org.hisp.dhis.android.core.dataelement.DataElement;
 import org.hisp.dhis.android.core.enrollment.EnrollmentCollectionRepository;
@@ -37,7 +40,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.disposables.CompositeDisposable;
-
+import timber.log.Timber;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -194,7 +197,24 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
         } else return -1;
     }
 
-    public List<Entry> importChild(int chartType) {
+    public String getGender() {
+        String gender;
+        TrackedEntityAttributeValue genderData = d2.trackedEntityModule().trackedEntityAttributeValues().byTrackedEntityInstance().in(teiUid)
+                .byTrackedEntityAttribute().in("cejWyOfXge6").one().blockingGet();
+
+        if( genderData == null){
+            gender = "Male";
+        }
+        else{
+            gender = genderData.value();
+        }
+
+        return  gender;
+    }
+
+
+
+    public List<Entry> importChild(int chartType){
         EnrollmentCollectionRepository enrollmentRepository = d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(teiUid).byProgram().eq(programUid);
         String enrollmentUid = enrollmentRepository.one().blockingGet().uid();
         Date incidentDate = enrollmentRepository.one().blockingGet().incidentDate();
@@ -227,6 +247,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
                         long diff = d.getTime() - incidentDate.getTime();
                         entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(h)));
                     }
+
                 }
                 break;
 
@@ -253,6 +274,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
                     String w = weight.value();
                     if (h != null && w != null)
                         entries.add(new Entry(Float.parseFloat(h), Float.parseFloat(w)));
+
                 }
                 break;
         }

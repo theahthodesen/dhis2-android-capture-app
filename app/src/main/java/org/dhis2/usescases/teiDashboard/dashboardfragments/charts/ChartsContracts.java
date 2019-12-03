@@ -32,6 +32,8 @@ public class ChartsContracts {
         boolean hasProgramWritePermission();
         List<Entry> importChild(int chartType);
         void test();
+        String getGender();
+
     }
 
 }
