@@ -10,6 +10,7 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
+import org.dhis2.data.tuples.Pair;
 import org.dhis2.usescases.teiDashboard.DashboardRepository;
 import org.dhis2.utils.DateUtils;
 import org.hisp.dhis.android.core.D2;
@@ -36,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +57,13 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
     private Date lastDataEntry;
     private Date incidentDate;
     String enrollmentUid;
+    HashMap<Integer,Date> intToDate;
+    HashMap<Float,Date> intToDateWFH;
+    HashMap<Integer, String> muacmap;
+    HashMap<Float, String> muacmapWFH;
+    HashMap<Integer, Float> rutfmap;
+    HashMap<Float, Float> rutfmapWFH;
+
 
     public String uo() {
         return enrollmentUid;
@@ -93,6 +102,12 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
         this.dashboardRepository = dashboardRepository;
         this.programUid = programUid;
         this.teiUid = teiUid;
+        intToDate = new HashMap<>();
+        muacmap = new HashMap<>();
+        muacmapWFH = new HashMap<>();
+        intToDateWFH = new HashMap<>();
+        rutfmap = new HashMap<>();
+        rutfmapWFH = new HashMap<>();
     }
 
     public void muacOd(){
@@ -233,7 +248,7 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
 
         DataElement heightDataElement = d2.dataElementModule().dataElements().byUid().eq("Gm634az8FEU").one().blockingGet();
         DataElement weightDataElement = d2.dataElementModule().dataElements().byUid().eq("GZZLGtLZwep").one().blockingGet();
-        DataElement dateDataElement = d2.dataElementModule().dataElements().byUid().eq("UpidRR4PfXv").one().blockingGet();
+        DataElement muacDataElement = d2.dataElementModule().dataElements().byUid().eq("FQC0FrFgLOX").one().blockingGet();
 
         switch (chartType) {
             case 1:
@@ -245,7 +260,18 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
                         Date d = e.eventDate();
 
                         long diff = d.getTime() - incidentDate.getTime();
-                        entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(h)));
+                        int days = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                        intToDate.put(days,d);
+                        entries.add(new Entry(days, Float.parseFloat(h)));
+                    }
+                    TrackedEntityDataValue muac = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(muacDataElement.uid()).one().blockingGet();
+                    String m = muac.value();
+                    if (m != null) {
+                        Date d = e.eventDate();
+
+                        long diff = d.getTime() - incidentDate.getTime();
+                        int days = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                        muacmap.put(days,m);
                     }
 
                 }
@@ -260,8 +286,21 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
                         Date d = e.eventDate();
 
                         long diff = d.getTime() - incidentDate.getTime();
-                        entries.add(new Entry((int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS), Float.parseFloat(w)));
+                        int days = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                        intToDate.put(days,d);
+                        rutfmap.put(days,Float.parseFloat(w));
+                        entries.add(new Entry(days, Float.parseFloat(w)));
                     }
+                    TrackedEntityDataValue muac = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(muacDataElement.uid()).one().blockingGet();
+                    String m = muac.value();
+                    if (m != null) {
+                        Date d = e.eventDate();
+
+                        long diff = d.getTime() - incidentDate.getTime();
+                        int days = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                        muacmap.put(days,m);
+                    }
+
                 }
                 break;
             case 3:
@@ -272,8 +311,20 @@ public class ChartsPresenterImpl implements ChartsContracts.Presenter {
 
                     TrackedEntityDataValue weight = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(weightDataElement.uid()).one().blockingGet();
                     String w = weight.value();
-                    if (h != null && w != null)
+                    if (h != null && w != null) {
+                        intToDateWFH.put(Float.parseFloat(h), e.eventDate());
+                        rutfmapWFH.put(Float.parseFloat(h),Float.parseFloat(w));
                         entries.add(new Entry(Float.parseFloat(h), Float.parseFloat(w)));
+                    }
+                    TrackedEntityDataValue muac = d2.trackedEntityModule().trackedEntityDataValues().byEvent().eq(e.uid()).byDataElement().in(muacDataElement.uid()).one().blockingGet();
+                    String m = muac.value();
+                    if (m != null) {
+                        Date d = e.eventDate();
+
+                        long diff = d.getTime() - incidentDate.getTime();
+                        int days = (int) TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                        muacmapWFH.put(Float.parseFloat(h),m);
+                    }
 
                 }
                 break;

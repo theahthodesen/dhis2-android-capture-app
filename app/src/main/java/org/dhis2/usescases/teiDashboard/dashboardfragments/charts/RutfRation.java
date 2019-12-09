@@ -36,6 +36,6 @@ public class RutfRation {
     }
 
     public boolean ifBetween(double i1, double i2, float val) {
-        return (i1 >= val && val < i2);
+        return (i1 <= val && val < i2);
     }
 }

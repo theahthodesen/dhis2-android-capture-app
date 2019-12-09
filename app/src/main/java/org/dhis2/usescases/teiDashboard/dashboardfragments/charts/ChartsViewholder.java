@@ -6,13 +6,16 @@ import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.widget.TextView;
+
 import org.dhis2.R;
+
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.IMarker;
 import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.MarkerView;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -33,6 +36,7 @@ import org.hisp.dhis.android.core.event.Event;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class ChartsViewholder extends RecyclerView.ViewHolder {
@@ -40,13 +44,13 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
     ItemChartsBinding binding;
 
 
-    ChartsViewholder(ItemChartsBinding binding){
+    ChartsViewholder(ItemChartsBinding binding) {
         super(binding.getRoot());
         this.binding = binding;
 
     }
 
-    public void bind(LineData model, int days, int type, ChartContainer chartContainer){
+    public void bind(LineData model, int days, int type, ChartContainer chartContainer) {
         binding.chart.fitScreen();
         binding.chart.getXAxis().setGranularityEnabled(false);
         binding.chart.getXAxis().setLabelCount(6);
@@ -56,47 +60,73 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         binding.chart.getXAxis().removeAllLimitLines();
         binding.chart.clear();
         binding.chart.setData(model);
-        Entry temp = binding.chart.getLineData().getDataSetByIndex(0).getEntryForIndex(binding.chart.getLineData().getDataSetByIndex(0).getEntryCount()-1);
+        Entry temp = binding.chart.getLineData().getDataSetByIndex(0).getEntryForIndex(binding.chart.getLineData().getDataSetByIndex(1).getEntryCount() - 1);
         float lengste = temp.getX();
-        temp = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount()-1).getEntryForIndex(binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount()-1).getEntryCount()-1);
+        temp = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryForIndex(binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryCount() - 1);
         float lengstedata = temp.getX();
-        int entrycount = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount()-1).getEntryCount();
+        int entrycount = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryCount();
+        if (type < 2) {
+            System.out.println("test");
+            if (binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryCount() > 2) {
+                float hoyde = 0f;
 
+                int ycount = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryCount();
+                for (int i = 0; i < ycount; i++) {
+                    temp = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryForIndex(i);
+                    if (temp.getY() > hoyde)
+                        hoyde = temp.getY();
+                }
+                System.out.println("test1");
+                temp = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryForIndex(0);
+                float first = temp.getX() - 10;
+                binding.chart.moveViewToX(first);
+                binding.chart.setVisibleYRangeMaximum(hoyde+30, YAxis.AxisDependency.LEFT);
+                binding.chart.setVisibleXRangeMaximum(((float) ((lengstedata - temp.getX()) * 1.1 + 50)));
+            }
 
-        if( lengste / lengstedata > 1.5 && entrycount > 0)
-            binding.chart.setVisibleXRangeMaximum(((float) (lengstedata*1.5)));
+        } else {
+            System.out.println("test2");
+            if (binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryCount() > 2) {
+                System.out.println("test3");
+                temp = binding.chart.getLineData().getDataSetByIndex(binding.chart.getLineData().getDataSetCount() - 1).getEntryForIndex(0);
+                float first = temp.getX() - 5;
+                binding.chart.moveViewToX(first);
+                binding.chart.setVisibleXRangeMaximum((float) ((lengstedata - temp.getX()) * 1.1 + 10));
+
+            }
+        }
         binding.chart.getXAxis().setDrawGridLinesBehindData(true);
         binding.chart.setRenderer(new MyLineLegendRenderer(binding.chart, binding.chart.getAnimator(), binding.chart.getViewPortHandler()));
-        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(),R.layout.tvcontent, chartContainer);
+        MarkerView marker = new CustomMarkerView(binding.getRoot().getContext(), R.layout.tvcontent, chartContainer, type, this);
         binding.chart.setMarker(marker);
-        binding.chart.setTouchEnabled(false);
+        binding.chart.setTouchEnabled(true);
         binding.chart.setDragEnabled(false);
         binding.chart.setScaleEnabled(false);
-        if ( type <2) {
+        if (type < 2) {
             binding.chart.getXAxis().setGranularityEnabled(true);
             binding.chart.getXAxis().setLabelCount(20);
             binding.chart.getXAxis().setGranularity(365);
 
-          binding.chart.getXAxis().setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getAxisLabel(float value, AxisBase axis) {
-                if (((int)value)  == 0)
-                    return "Birth";
-                else if (((int)value) / 365 == 1)
-                    return "" + ((int)value) / 365 + " year";
-                else if (((int)value) % 365 == 0)
-                        return "" + ((int)value) / 365 + " years";
-                return ""+ value;
-            }
+            binding.chart.getXAxis().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getAxisLabel(float value, AxisBase axis) {
+                    if (((int) value) == 0)
+                        return "Birth";
+                    else if (((int) value) / 365 == 1)
+                        return "" + ((int) value) / 365 + " year";
+                    else if (((int) value) % 365 == 0)
+                        return "" + ((int) value) / 365 + " years";
+                    return "" + value;
+                }
 
-            @Override
-            public String getFormattedValue(float value, AxisBase axis) {
-                return super.getFormattedValue(value, axis);
-            }
-        });
+                @Override
+                public String getFormattedValue(float value, AxisBase axis) {
+                    return super.getFormattedValue(value, axis);
+                }
+            });
         }
 
-        if(days >= 0) {
+        if (days >= 0) {
             LimitLine dayLine = new LimitLine(days, "Today is day: " + days);
             dayLine.setLineWidth(0.2f);
             dayLine.enableDashedLine(10f, 10f, 0f);
@@ -107,7 +137,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
 
         binding.executePendingBindings();
-        itemView.setOnClickListener(view->{
+        itemView.setOnClickListener(view -> {
         });
         binding.chart.setPinchZoom(true);
         binding.chart.setDragEnabled(true);
@@ -116,24 +146,80 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
     public class CustomMarkerView extends MarkerView {
         ChartContainer chartContainer;
+        ChartsViewholder view;
         private TextView tvContent;
+        private int type;
 
-        public CustomMarkerView (Context context, int layoutResource, ChartContainer chartContainer) {
+        public CustomMarkerView(Context context, int layoutResource, ChartContainer chartContainer, int type, ChartsViewholder view) {
             super(context, layoutResource);
             // this markerview only displays a textview
             tvContent = (TextView) findViewById(R.id.tvContent);
             this.chartContainer = chartContainer;
+            this.type = type;
+            this.view = view;
         }
 
         // callbacks everytime the MarkerView is redrawn, can be used to update the
         // content (user-interface)
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
+            view.binding.zdata.setText("");
+            view.binding.muacdata.setText("");
+            view.binding.RUFTdata.setText("");
+            view.binding.weighprogressdata.setText("");
+            RutfRation ruftration = new RutfRation();
+            if (type == 0) {
+                view.binding.weighprogress.setText("Height progess:");
+                int count = chartContainer.getLineData().getDataSetCount();
+                if (chartContainer.getLineData().getDataSetByIndex(count - 1).contains(e)) {
+                    int index = chartContainer.getLineData().getDataSetByIndex(count - 1).getEntryIndex(e);
+                    if (index > 0) {
+                        double diff = (double) e.getY() - chartContainer.getLineData().getDataSetByIndex(count - 1).getEntryForIndex(index - 1).getY();
 
-            tvContent.setText("x:" + e.getX() + "  y:" + e.getY() + " z-score:"+ chartContainer.zScore((int) e.getX(),e.getY())); // set the entry-value as the display text
+                        view.binding.weighprogressdata.setText(String.format("%.1f",diff));
+                    }
+                }
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");//formating according to my need
+                String date = formatter.format(chartContainer.presenter.intToDate.get((int) e.getX()));
+                tvContent.setText("Z-score:" + chartContainer.zScore(e.getX(), e.getY()) + "  Weight:" + e.getY()); // set the entry-value as the display text
+                view.binding.zdata.setText(date);
+                view.binding.muacdata.setText(chartContainer.presenter.muacmap.get((int) e.getX()));
+                view.binding.RUFTdata.setText("" + chartContainer.presenter.rutfmap.get((int) e.getX()));
+            } else if (type == 1) {
+                int count = chartContainer.getLineData().getDataSetCount();
+                if (chartContainer.getLineData().getDataSetByIndex(count - 1).contains(e)) {
+                    int index = chartContainer.getLineData().getDataSetByIndex(count - 1).getEntryIndex(e);
+                    if (index > 0) {
+                        double diff = (double) e.getY() - chartContainer.getLineData().getDataSetByIndex(count - 1).getEntryForIndex(index - 1).getY();
+                        view.binding.weighprogressdata.setText( String.format("%.1f",diff));
+                    }
+                }
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");//formating according to my need
+                String date = formatter.format(chartContainer.presenter.intToDate.get((int) e.getX()));
+                tvContent.setText("Z-score:" + chartContainer.zScore(e.getX(), e.getY()) + "  Weight:" + e.getY()); // set the entry-value as the display text
+                view.binding.zdata.setText(date);
+                view.binding.muacdata.setText(chartContainer.presenter.muacmap.get((int) e.getX()));
+                view.binding.RUFTdata.setText("" + chartContainer.presenter.rutfmap.get((int) e.getX()));
+            } else if (type == 2) {
+                int count = chartContainer.getLineData().getDataSetCount();
+                if (chartContainer.getLineData().getDataSetByIndex(count - 1).contains(e)) {
+                    int index = chartContainer.getLineData().getDataSetByIndex(count - 1).getEntryIndex(e);
+                    if (index > 0) {
+                        double diff = (double) e.getY() - chartContainer.getLineData().getDataSetByIndex(count - 1).getEntryForIndex(index - 1).getY();
+                        view.binding.weighprogressdata.setText( String.format("%.2f",diff));
+                    }
+                }
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");//formating according to my need
+                String date = formatter.format(chartContainer.presenter.intToDateWFH.get(e.getX()));
+                tvContent.setText("Z-score:" + chartContainer.zScore(e.getX(), e.getY()) + "  Weight:" + e.getY() + "  Height:" + e.getX()); // set the entry-value as the display text
+                view.binding.zdata.setText(date);
+                view.binding.muacdata.setText("" + chartContainer.presenter.muacmapWFH.get(e.getX()));
+                view.binding.RUFTdata.setText("" + ruftration.get92g(e.getY()).first);
+            }
             super.refreshContent(e, highlight);
 
         }
+
         private MPPointF mOffset;
 
         @Override
@@ -142,12 +228,14 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
         }
 
     }
+
     public class MyFillFormatter implements IFillFormatter {
         private ILineDataSet boundaryDataSet;
 
         public MyFillFormatter() {
             this(null);
         }
+
         //Pass the dataset of other line in the Constructor
         public MyFillFormatter(ILineDataSet boundaryDataSet) {
             this.boundaryDataSet = boundaryDataSet;
@@ -160,11 +248,12 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
 
         //Define a new method which is used in the LineChartRenderer
         public List<Entry> getFillLineBoundary() {
-            if(boundaryDataSet != null) {
+            if (boundaryDataSet != null) {
                 return ((LineDataSet) boundaryDataSet).getValues();
             }
             return null;
-        }}
+        }
+    }
 
     public class MyLineLegendRenderer extends LineChartRenderer {
 
@@ -201,8 +290,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
                     final Drawable drawable = dataSet.getFillDrawable();
                     if (drawable != null) {
                         drawFilledPath(c, filled, drawable);
-                    }
-                    else {
+                    } else {
                         drawFilledPath(c, filled, dataSet.getFillColor(), dataSet.getFillAlpha());
                     }
                 }
@@ -219,7 +307,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
             final float phaseY = mAnimator.getPhaseY();
 
             //Call the custom method to retrieve the dataset for other line
-            final List<Entry> boundaryEntries = ((ChartsFragment.MyFillFormatter)dataSet.getFillFormatter()).getFillLineBoundary();
+            final List<Entry> boundaryEntries = ((ChartsFragment.MyFillFormatter) dataSet.getFillFormatter()).getFillLineBoundary();
 
             // We are currently at top-last point, so draw down to the last boundary point
             Entry boundaryEntry = boundaryEntries.get(bounds.min + bounds.range);
@@ -249,8 +337,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
             final Drawable drawable = dataSet.getFillDrawable();
             if (drawable != null) {
                 drawFilledPath(c, spline, drawable);
-            }
-            else {
+            } else {
                 drawFilledPath(c, spline, dataSet.getFillColor(), dataSet.getFillAlpha());
             }
 
@@ -264,7 +351,7 @@ public class ChartsViewholder extends RecyclerView.ViewHolder {
             filled.reset();
 
             //Call the custom method to retrieve the dataset for other line
-            final List<Entry> boundaryEntries = ((MyFillFormatter)dataSet.getFillFormatter()).getFillLineBoundary();
+            final List<Entry> boundaryEntries = ((MyFillFormatter) dataSet.getFillFormatter()).getFillLineBoundary();
 
             final Entry entry = dataSet.getEntryForIndex(startIndex);
             final Entry boundaryEntry = boundaryEntries.get(startIndex);

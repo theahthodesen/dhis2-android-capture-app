@@ -50,6 +50,7 @@ class ChartsAdapter extends RecyclerView.Adapter<ChartsViewholder>{
     public int getItemCount() {
         return 1;
     }
+
     public void setDays(int i) {
         days = i;
     }

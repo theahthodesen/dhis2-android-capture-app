@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -90,11 +91,9 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     public void onResume() {
         super.onResume();
         presenter.init(this);
-        //binding.incidentDate.setText(presenter.getLastEntryDateText()+ " ");
-        //binding.enrollmentDate.setText(presenter.getLastEntryDayText()+ " ");
     }
 
-    public void onAttach(Context context){
+    public void onAttach(Context context) {
         super.onAttach(context);
         TeiDashboardMobileActivity activity = (TeiDashboardMobileActivity) context;
         if (((App) context.getApplicationContext()).dashboardComponent() != null)
@@ -113,11 +112,11 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         }
     }
 
- //   @Override
-   // public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-      //  FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
-     //   childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
-  //  }
+    //   @Override
+    // public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    //  FragmentTransaction childFragTrans = getChildFragmentManager().beginTransaction();
+    //   childFragTrans.replace(R.id.child_fragment_container, new NotesFragment()).commit();
+    //  }
 
     @Nullable
     @Override
@@ -161,17 +160,17 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         }
 
 
-        ArrayList<ILineDataSet> dataSets = readSDValues(fileHFA);
+        ArrayList<ILineDataSet> dataSets = readSDValues(fileHFA, false);
         dataSets.add(import_child_values(1));
-        adapter.addChart(new ChartContainer(new LineData(dataSets), calValues(fileCalculateZHFA)));
+        adapter.addChart(new ChartContainer(new LineData(dataSets), calValues(fileCalculateZHFA), (ChartsPresenterImpl) presenter));
 
-        ArrayList<ILineDataSet> dataSetsWFA = readSDValues(fileWFA);
+        ArrayList<ILineDataSet> dataSetsWFA = readSDValues(fileWFA, false);
         dataSetsWFA.add(import_child_values(2));
-        adapter.addChart(new ChartContainer(new LineData(dataSetsWFA), calValues(fileCalculateZWFA)));
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFA), calValues(fileCalculateZWFA), (ChartsPresenterImpl) presenter));
 
-        ArrayList<ILineDataSet> dataSetsWFH = readSDValues(fileWFH);
+        ArrayList<ILineDataSet> dataSetsWFH = readSDValues(fileWFH, true);
         dataSetsWFH.add(import_child_values(3));
-        adapter.addChart(new ChartContainer(new LineData(dataSetsWFH), calValues(fileCalculateZWFH)));
+        adapter.addChart(new ChartContainer(new LineData(dataSetsWFH), calValues(fileCalculateZWFH), (ChartsPresenterImpl) presenter));
 
 
         return binding.getRoot();
@@ -194,14 +193,14 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         intent.putExtras(bundle);
         startActivity(intent);
 
-     //   Intent intent = new Intent(getContext(), EventCaptureActivity.class);
-     //   intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
-     //   intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
-     //   startActivity(intent);
+        //   Intent intent = new Intent(getContext(), EventCaptureActivity.class);
+        //   intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
+        //   intent.putExtras(EventCaptureActivity.getActivityBundle(presenter.createEvent(), presenter.getProgramUid()));
+        //   startActivity(intent);
     }
 
-    public ArrayList<Quartet> calValues(String nameOfFile){
-
+    public HashMap<Float, Quartet> calValues(String nameOfFile) {
+        HashMap<Float, Quartet> test = new HashMap<>();
         BufferedReader reader;
         ArrayList<Quartet> lineValues = new ArrayList<>();
         try {
@@ -212,9 +211,9 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             String[] labels = line.split("\t");
 
             line = reader.readLine();
-            while (line != null){
+            while (line != null) {
                 String[] values = line.split("\t");
-                lineValues.add(new Quartet() {
+                test.put(Float.parseFloat(values[0]), new Quartet() {
                     @NonNull
                     @Override
                     public Object val0() {
@@ -242,17 +241,16 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
                 line = reader.readLine();
             }
 
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return lineValues;
+        return test;
 
     }
 
 
-    public ArrayList<ILineDataSet> readSDValues(String nameOfFile){
+    public ArrayList<ILineDataSet> readSDValues(String nameOfFile, boolean farger) {
 
         BufferedReader reader;
         ArrayList<ArrayList<Entry>> datasets;
@@ -264,45 +262,44 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
             String line = reader.readLine();
             String[] labels = line.split("\t");
-            datasets = new ArrayList<>(labels.length-1);
-            for(int i = 0; i < labels.length-1; i++){
+            datasets = new ArrayList<>();
+            for (int i = 0; i < labels.length - 3; i++) {
                 datasets.add(new ArrayList<Entry>());
             }
             line = reader.readLine();
-            while (line != null){
+            while (line != null) {
                 String[] values = line.split("\t");
-                int c = 1;
-                for(ArrayList<Entry> e : datasets){
-                    e.add(new Entry(Float.parseFloat(values[0]), Float.parseFloat(values[c])));
-                    c+=1;
+                int c = 2;
+                for (ArrayList<Entry> e : datasets) {
+                        e.add(new Entry(Float.parseFloat(values[0]), Float.parseFloat(values[c])));
+                    c += 1;
 
                 }
                 line = reader.readLine();
             }
             int count = 1;
-            ArrayList<LineDataSet> lineDataSetList =  new ArrayList<LineDataSet>();
+            ArrayList<LineDataSet> lineDataSetList = new ArrayList<LineDataSet>();
             for (int i = 0; i < datasets.size(); i++) {
-                lineDataSetList.add(new LineDataSet(datasets.get(i),String.valueOf(i)));
+                lineDataSetList.add(new LineDataSet(datasets.get(i), String.valueOf(i)));
             }
 
-                for (int i = 0; i < lineDataSetList.size()-1; i++) {
-                    setColor(lineDataSetList.get(i));
-                    lineDataSetList.get(i).setMode(LineDataSet.Mode.CUBIC_BEZIER);
-                    lineDataSetList.get(i).setDrawCircles(false);
-                    lineDataSetList.get(i).setLineWidth(0.2f);
-                    lineDataSetList.get(i).setDrawCircleHole(false);
-                    lineDataSetList.get(i).setFillAlpha(140);
-                    lineDataSetList.get(i).setDrawFilled(true);
-                    lineDataSetList.get(i).setHighlightEnabled(false);
-                    lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i+1)));
+            for (int i = 0; i < lineDataSetList.size() - 1; i++) {
+                setColor(lineDataSetList.get(i), farger);
+                lineDataSetList.get(i).setMode(LineDataSet.Mode.CUBIC_BEZIER);
+                lineDataSetList.get(i).setDrawCircles(false);
+                lineDataSetList.get(i).setLineWidth(0.2f);
+                lineDataSetList.get(i).setDrawCircleHole(false);
+                lineDataSetList.get(i).setFillAlpha(140);
+                lineDataSetList.get(i).setDrawFilled(true);
+                lineDataSetList.get(i).setHighlightEnabled(false);
+                lineDataSetList.get(i).setFillFormatter(new MyFillFormatter(lineDataSetList.get(i + 1)));
 
                 sets.add(lineDataSetList.get(i));
 
-                count +=1;
+                count += 1;
 
             }
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -311,7 +308,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     }
 
 
-    public LineDataSet import_child_values(int chartType){
+    public LineDataSet import_child_values(int chartType) {
 
         List<Entry> entries = presenter.importChild(chartType);
         LineDataSet child = new LineDataSet(entries, "Child data");
@@ -326,12 +323,13 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
     }
 
-    public void resetTypefaceChart(){
+    public void resetTypefaceChart() {
         binding.heightforage.setTypeface(null, Typeface.NORMAL);
         binding.weightforheight.setTypeface(null, Typeface.NORMAL);
         binding.weightforage.setTypeface(null, Typeface.NORMAL);
 
     }
+
     public void set_weight_for_height(View i) {
         resetTypefaceChart();
         adapter.setDays(presenter.getTodayInt(2));
@@ -339,12 +337,14 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding.weightforheight.setTypeface(null, Typeface.BOLD);
 
     }
+
     public void set_weight_for_age(View i) {
         resetTypefaceChart();
         adapter.setDays(presenter.getTodayInt(1));
         adapter.setchartType("weight_for_age");
         binding.weightforage.setTypeface(null, Typeface.BOLD);
     }
+
     public void set_height_for_age(View i) {
         resetTypefaceChart();
         adapter.setDays(presenter.getTodayInt(1));
@@ -352,31 +352,36 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
         binding.heightforage.setTypeface(null, Typeface.BOLD);
     }
 
-    public LineDataSet setColor(LineDataSet dataset){
-        if(dataset.getLabel().contains("3") || dataset.getLabel().contains("4")){
-            dataset.setFillColor(Color.GREEN);
-        }
-        else if(dataset.getLabel().contains("2") || dataset.getLabel().contains("5")){
-            dataset.setFillColor(Color.YELLOW);
-        }
-        else if(dataset.getLabel().contains("1") || dataset.getLabel().contains("6")){
-            dataset.setFillColor(Color.rgb(255,215,0));
-        }
-        else if(dataset.getLabel().contains("0") || dataset.getLabel().contains("7")){
-            dataset.setFillColor(Color.RED);
-        }
-        else{
-            dataset.setFillColor(Color.WHITE);
+    public LineDataSet setColor(LineDataSet dataset, boolean farger) {
+        if (farger) {
+            if (dataset.getLabel().contains("3") || dataset.getLabel().contains("2")) {
+                dataset.setFillColor(Color.GREEN);
+            } else if (dataset.getLabel().contains("4") || dataset.getLabel().contains("1")) {
+                dataset.setFillColor(Color.YELLOW);
+            } else if (dataset.getLabel().contains("0") || dataset.getLabel().contains("5")) {
+                dataset.setFillColor(Color.RED);
+            }
+        } else {
+            if (dataset.getLabel().contains("3") || dataset.getLabel().contains("4")) {
+                dataset.setFillColor(Color.GREEN);
+            } else if (dataset.getLabel().contains("2") || dataset.getLabel().contains("1")) {
+                dataset.setFillColor(Color.GREEN);
+            } else if (dataset.getLabel().contains("0") || dataset.getLabel().contains("5")) {
+                dataset.setFillColor(Color.YELLOW);
+            } /*else if (dataset.getLabel().contains("0") || dataset.getLabel().contains("7")) {
+                dataset.setFillColor(Color.RED);
+            }*/
         }
         return dataset;
-
     }
+
     public class MyFillFormatter implements IFillFormatter {
         private ILineDataSet boundaryDataSet;
 
         public MyFillFormatter() {
             this(null);
         }
+
         //Pass the dataset of other line in the Constructor
         public MyFillFormatter(ILineDataSet boundaryDataSet) {
             this.boundaryDataSet = boundaryDataSet;
@@ -389,11 +394,12 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
 
         //Define a new method which is used in the LineChartRenderer
         public List<Entry> getFillLineBoundary() {
-            if(boundaryDataSet != null) {
+            if (boundaryDataSet != null) {
                 return ((LineDataSet) boundaryDataSet).getValues();
             }
             return null;
-        }}
+        }
+    }
 
     public class MyLineLegendRenderer extends LineChartRenderer {
 
@@ -430,8 +436,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
                     final Drawable drawable = dataSet.getFillDrawable();
                     if (drawable != null) {
                         drawFilledPath(c, filled, drawable);
-                    }
-                    else {
+                    } else {
                         drawFilledPath(c, filled, dataSet.getFillColor(), dataSet.getFillAlpha());
                     }
                 }
@@ -448,7 +453,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             final float phaseY = mAnimator.getPhaseY();
 
             //Call the custom method to retrieve the dataset for other line
-            final List<Entry> boundaryEntries = ((MyFillFormatter)dataSet.getFillFormatter()).getFillLineBoundary();
+            final List<Entry> boundaryEntries = ((MyFillFormatter) dataSet.getFillFormatter()).getFillLineBoundary();
 
             // We are currently at top-last point, so draw down to the last boundary point
             Entry boundaryEntry = boundaryEntries.get(bounds.min + bounds.range);
@@ -478,8 +483,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             final Drawable drawable = dataSet.getFillDrawable();
             if (drawable != null) {
                 drawFilledPath(c, spline, drawable);
-            }
-            else {
+            } else {
                 drawFilledPath(c, spline, dataSet.getFillColor(), dataSet.getFillAlpha());
             }
 
@@ -493,7 +497,7 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
             filled.reset();
 
             //Call the custom method to retrieve the dataset for other line
-            final List<Entry> boundaryEntries = ((MyFillFormatter)dataSet.getFillFormatter()).getFillLineBoundary();
+            final List<Entry> boundaryEntries = ((MyFillFormatter) dataSet.getFillFormatter()).getFillLineBoundary();
 
             final Entry entry = dataSet.getEntryForIndex(startIndex);
             final Entry boundaryEntry = boundaryEntries.get(startIndex);
@@ -528,7 +532,6 @@ public class ChartsFragment extends FragmentGlobalAbstract implements ChartsCont
     //public Consumer<List<LineChart>> swapCharts() {
 
 
-
-        //return chartModels -> adapter.setItems(chartModels);
+    //return chartModels -> adapter.setItems(chartModels);
     //}
 }

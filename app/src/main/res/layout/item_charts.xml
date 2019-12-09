@@ -11,10 +11,165 @@
         android:background="@color/white"
         >
 
+        <LinearLayout
+            android:id="@+id/blabla"
+
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            >
+            <androidx.cardview.widget.CardView
+                android:id="@+id/tei_data"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:cardElevation="4dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    >
+
+                    <TextView
+                        android:id="@+id/z"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:text="Date:"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="Entry Date:" />
+
+                    <TextView
+                        android:id="@+id/zdata"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:gravity="end"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        android:text=""
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/z"
+                        tools:text="12" />
+
+                    <TextView
+                        android:id="@+id/muac"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:text="MUAC:"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/z"
+                        tools:text="MUAC:" />
+
+                    <TextView
+                        android:id="@+id/muacdata"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:gravity="end"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        android:text=""
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/muac"
+                        tools:text="123" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+            <View
+                android:id="@+id/spacer"
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                app:layout_constraintStart_toEndOf="@id/tei_data"
+
+                android:background="#fff" />
+            <androidx.cardview.widget.CardView
+                android:id="@+id/tei_data1"
+                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/spacer"
+                app:cardElevation="4dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    >
+
+                    <TextView
+                        android:id="@+id/weighprogress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:text="Weight progress:"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:text="Weight progress:" />
+
+                    <TextView
+                        android:id="@+id/weighprogressdata"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:gravity="end"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        android:text=""
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/weighprogress"
+                        tools:text="1.2" />
+
+                    <TextView
+                        android:id="@+id/RUFT"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:text="RUTF recommendation:"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/weighprogress"
+                        tools:text="RUTF:" />
+
+                    <TextView
+                        android:id="@+id/RUFTdata"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/rubik_medium"
+                        android:gravity="end"
+                        android:textColor="@color/text_black_4d4d4d"
+                        android:textSize="12sp"
+                        android:text=""
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/RUFT"
+                        tools:text="12.5 92g (7 days)" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/blabla"
+            app:layout_constraintBottom_toBottomOf="parent"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="0dp" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
